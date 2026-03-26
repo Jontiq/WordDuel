@@ -1,17 +1,32 @@
 ﻿
 using WordDuel.BLL.Enums;
+using WordDuel.BLL.GameLogicModels;
 using WordDuel.BLL.GameLogicServices;
 
 namespace WordDuel.UnitTests
 {
     public class GameServiceTests
     {
+        //Helpers
+        private readonly GameService service;
+        public GameServiceTests()
+        {
+            service = new GameService(new Random());
+            
+        }
+
+        private Game CreateGameWithTwoPlayers()
+        {
+            var game = service.CreateGame(3);
+            service.AddPlayer(game, "A");
+            service.AddPlayer(game, "B");
+            return game;
+        }
+
         //======================CreateGame===========================================
         [Fact]
         public void CreateGame_ShouldReturnGameWithCorrectRoundsToWinAndWaitingForPlayersState()
         {
-            // Arrange
-            var service = new GameService();
 
             // Act
             var result = service.CreateGame(3);
@@ -25,9 +40,6 @@ namespace WordDuel.UnitTests
         [Fact]
         public void CreateGame_ShouldThrowException_WhenRoundsToWinIsLessThanOrEqualToZero()
         {
-            // Arrange
-            var service = new GameService();
-
             // Act and Assert
             Assert.Throws<ArgumentException>(() => service.CreateGame(0));
         }
@@ -38,38 +50,29 @@ namespace WordDuel.UnitTests
         public void AddPlayers_ShouldAddPlayerToGame ()
         {
             // Arrange 
-            var service = new GameService();
             var game = service.CreateGame(3);
             // Act
-            service.AddPlayer(game, "Bob");
+            service.AddPlayer(game, "A");
             // Assert
             Assert.Single(game.Players);
-            Assert.Equal("Bob", game.Players[0].Name);
+            Assert.Equal("A", game.Players[0].Name);
         }
 
         [Fact]
         public void AddPlayers_ShouldAddTwoPlayersToGame()
         {
-            // Arrange 
-            var service = new GameService();
-            var game = service.CreateGame(3);
-            // Act
-            service.AddPlayer(game, "Bob");
-            service.AddPlayer(game, "Anna");
+           var game = CreateGameWithTwoPlayers();
             // Assert
             Assert.Equal(2, game.Players.Count);
-            Assert.Equal("Bob", game.Players[0].Name);
-            Assert.Equal("Anna", game.Players[1].Name);
+            Assert.Equal("A", game.Players[0].Name);
+            Assert.Equal("B", game.Players[1].Name);
         }
 
         [Fact]
         public void AddPlayers_ShouldThrowException_WhenAddingThreePlayers()
         {
             // Arrange 
-            var service = new GameService();
-            var game = service.CreateGame(3);      
-            service.AddPlayer(game, "Bob");
-            service.AddPlayer(game, "Anna");
+            var game = CreateGameWithTwoPlayers();
 
             // Act + Assert
             Assert.Throws<InvalidOperationException>(() => service.AddPlayer(game, "Lisa"));
@@ -79,7 +82,6 @@ namespace WordDuel.UnitTests
         public void AddPlayer_ShouldAssignDefaultName_WhenNameIsEmpty()
         {
             //Arrange
-            var service = new GameService();
             var game = service.CreateGame(3);
             //Act
             service.AddPlayer(game, "");
@@ -93,7 +95,6 @@ namespace WordDuel.UnitTests
         public void AddPlayer_ShouldTrimName_WhenNameContainsSpaces()
         {
             // Arrange
-            var service = new GameService();
             var game = service.CreateGame(3);
 
             // Act
@@ -102,6 +103,59 @@ namespace WordDuel.UnitTests
             // Assert
             Assert.Single(game.Players);
             Assert.Equal("Anna", game.Players[0].Name);
+        }
+
+        //====================StartGame=================================
+
+        [Fact]
+        public void StartGame_ShouldThrowException_WhenLessThanTwoPlayers()
+        {
+            // Arrange
+            var game = service.CreateGame(3);
+            service.AddPlayer(game, "Anna");
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => service.StartGame(game));
+        }
+
+        [Fact]
+        public void StartGame_ShouldSetStateToInProgress()
+        {
+            // Arrange
+            var game = CreateGameWithTwoPlayers();
+
+            // Act
+            service.StartGame(game);
+
+            // Assert
+            Assert.Equal(GameState.InProgress, game.State);
+        }
+        [Fact]
+        public void StartGame_ShouldSetCurrentPlayer()
+        {
+            // Arrange
+            var game = CreateGameWithTwoPlayers();
+
+            // Act
+            service.StartGame(game);
+
+            // Assert
+            Assert.NotNull(game.CurrentPlayer);
+            Assert.Contains(game.CurrentPlayer, game.Players);
+        }
+
+        [Fact]
+        public void StartGame_ShouldCreateFirstRound()
+        {
+            // Arrange
+            var game = CreateGameWithTwoPlayers();
+
+            // Act
+            service.StartGame(game);
+
+            // Assert
+            Assert.Single(game.Rounds);
+            Assert.Equal(1, game.CurrentRoundNumber);
         }
     }
 }

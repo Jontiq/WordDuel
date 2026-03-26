@@ -2,12 +2,19 @@
 using System.Collections.Generic;
 using System.Text;
 using WordDuel.BLL.Enums;
+using WordDuel.BLL.GameLogicIntefaces;
 using WordDuel.BLL.GameLogicModels;
 
 namespace WordDuel.BLL.GameLogicServices
 {
-    public class GameService
+    public class GameService : IGameService
     {
+        private readonly Random _random;
+        public GameService (Random random)
+        {
+            _random = random;
+        }
+
         // <summary>
         // Creates a new game instance with the required number of wins.
         // We use "RoundsToWin" instead of total rounds because the game follows a "best of" format.
@@ -17,15 +24,14 @@ namespace WordDuel.BLL.GameLogicServices
         // </summary>
         public Game CreateGame(int roundsToWin)
         {
+            if (roundsToWin <= 0)
+                throw new ArgumentException("RoundsToWin must be greater than 0");
+
             Game game = new Game
             {
                 RoundsToWin = roundsToWin,
-                State = Enums.GameState.WaitingForPlayers
+                State = GameState.WaitingForPlayers
             };
-            if (roundsToWin <= 0)
-            {
-                throw new ArgumentException("RoundsToWin must be greater than 0");
-            }
 
             return game;
         }
@@ -50,7 +56,7 @@ namespace WordDuel.BLL.GameLogicServices
 
             game.State = GameState.InProgress;
 
-            game.CurrentPlayer = game.Players[new Random().Next(2)];
+            game.CurrentPlayer = game.Players[_random.Next(2)];
 
             StartNewRound(game);
         }
