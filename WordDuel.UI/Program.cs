@@ -1,10 +1,15 @@
 using WordDuel.BLL.Repositories;
 using WordDuel.BLL.WordServices;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+// Hårdkodad ordlista för testning
+var words = new[] { "STORK", "STÄPP", "SLAPP", "Släppa"};
+
 
 // Registrera repository
 builder.Services.AddSingleton<IWordRepository>(new LocalWordRepository(words));

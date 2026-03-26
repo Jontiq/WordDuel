@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace WordDuel.BLL.Services
+namespace WordDuel.BLL.WordServices
 {
     public interface IWordService
     {

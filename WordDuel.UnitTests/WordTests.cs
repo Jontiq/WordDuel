@@ -1,4 +1,5 @@
-﻿using WordDuel.BLL.Services;
+﻿using WordDuel.BLL.Repositories;
+using WordDuel.BLL.WordServices;
 
 namespace WordDuel.UnitTests
 {
@@ -11,8 +12,9 @@ namespace WordDuel.UnitTests
         public void WordServiceTest(string word)
         {
             HashSet<string> words = new HashSet<string>() { "STORK", "STÄPP", "SLApp" };
-            WordService ws = new WordService(words);            
-            Assert.True(ws.IsValidWord(word));
+            IWordRepository wordRepository = new LocalWordRepository(words);
+            WordService ws = new WordService(wordRepository);            
+            Assert.True(ws.IsValidWordAsync(word)?.Result);
         }
 
         [Theory]
@@ -22,8 +24,9 @@ namespace WordDuel.UnitTests
         public void WordServiceWrongTest(string word)
         {
             HashSet<string> words = new HashSet<string>() { "STORK", "STÄPP", "SLApp" };
-            WordService ws = new WordService(words);
-            Assert.False(ws.IsValidWord(word));
+            IWordRepository wordRepository = new LocalWordRepository(words);
+            WordService ws = new WordService(wordRepository);
+            Assert.False(ws.IsValidWordAsync(word)?.Result);
         }
 
     }
