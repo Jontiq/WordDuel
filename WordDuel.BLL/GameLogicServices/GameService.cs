@@ -62,6 +62,9 @@ namespace WordDuel.BLL.GameLogicServices
         }
         public void StartNewRound(Game game)
         {
+            if (game.CurrentPlayer == null)
+                throw new InvalidOperationException("CurrentPlayer must be set before starting a new round.");
+
             var round = new Round
             {
                 RoundNumber = game.Rounds.Count + 1,
