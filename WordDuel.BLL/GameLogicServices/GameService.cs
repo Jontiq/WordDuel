@@ -43,6 +43,17 @@ namespace WordDuel.BLL.GameLogicServices
             game.Players.Add(new Player { Name = name, Score = 0 });
         }
 
+        public void StartGame(Game game)
+        {
+            if (game.Players.Count != 2)
+                throw new InvalidOperationException("Need 2 players");
+
+            game.State = GameState.InProgress;
+
+            game.CurrentPlayer = game.Players[new Random().Next(2)];
+
+            StartNewRound(game);
+        }
         public void StartNewRound(Game game)
         {
             var round = new Round
@@ -54,18 +65,6 @@ namespace WordDuel.BLL.GameLogicServices
 
             game.Rounds.Add(round);
             game.CurrentRoundNumber = round.RoundNumber;
-        }
-
-        public void StartGame(Game game)
-        {
-            if (game.Players.Count != 2)
-                throw new InvalidOperationException("Need 2 players");
-
-            game.State = GameState.InProgress;
-
-            game.CurrentPlayer = game.Players[new Random().Next(2)];
-
-            StartNewRound(game);
         }
     }
 }
