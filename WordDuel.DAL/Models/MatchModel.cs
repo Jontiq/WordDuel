@@ -11,8 +11,8 @@ namespace WordDuel.DAL.Models
         public string State { get; set; } = string.Empty; // status
         public int BestOf { get; set; } // Bäst av 3 tex
 
-        public int CurrentRoundId { get; set; } // Id för den pågående rundan
-        public int CurrentPlayerId { get; set; } // Id för spelaren som har sin tur
+        public int? CurrentRoundId { get; set; } // Id för den pågående rundan
+        public int? CurrentPlayerId { get; set; } // Id för spelaren som har sin tur
         public int? WinnerPlayerId { get; set; } // Id för vinnaren av matchen
         public int TurnTimeSeconds { get; set; } // Tid i sekunder för varje spelares tur
 
