@@ -11,11 +11,12 @@ namespace WordDuel.BLL.GameLogicModels
         public List<Round> Rounds { get; set; } =new();
 
         public int CurrentRoundNumber { get; set; }
-        public GameState Sate { get; set; }
+        public GameState State { get; set; }
         
         public Player? CurrentPlayer { get; set; }
         public Player? Winner { get; set; }
-        public int RoundsToWin { get; set; }
+        public int RoundsToWin { get; set; } //how many rounds a player must win to win the game
+                                             //ex. for best of 5 RoundsToWin=3
         
     }
 }
