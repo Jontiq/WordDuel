@@ -1,7 +1,17 @@
+using WordDuel.BLL.Repositories;
+using WordDuel.BLL.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+// Registrera repository
+builder.Services.AddSingleton<IWordRepository>(new LocalWordRepository(words));
+
+// Registrera WordService
+builder.Services.AddSingleton<WordService>();
+
 
 var app = builder.Build();
 
