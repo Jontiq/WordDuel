@@ -1,5 +1,5 @@
 using WordDuel.BLL.Repositories;
-using WordDuel.BLL.Services;
+using WordDuel.BLL.WordServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
