@@ -16,9 +16,9 @@ namespace WordDuel.DAL.Models
         public int? WinnerPlayerId { get; set; }
         public int TurnTimeSeconds { get; set; }
 
-        public RoundModel CurrentRound { get; set; }
-        public PlayerModel CurrentPlayer { get; set; }
-        public PlayerModel WinnerPlayer { get; set; }
+        public RoundModel? CurrentRound { get; set; }
+        public PlayerModel? CurrentPlayer { get; set; }
+        public PlayerModel? WinnerPlayer { get; set; }
 
         public ICollection<PlayerModel> Players { get; set; } = new List<PlayerModel>();
         public ICollection<RoundModel> Rounds { get; set; } = new List<RoundModel>();
