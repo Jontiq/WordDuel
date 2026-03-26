@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using WordDuel.BLL.Enums;
 using WordDuel.BLL.GameLogicModels;
 
 namespace WordDuel.BLL.GameLogicServices
@@ -29,5 +30,42 @@ namespace WordDuel.BLL.GameLogicServices
             return game;
         }
 
+        public void AddPlayers (Game game, string? name)
+        {
+            name = name?.Trim();
+            if (game.Players.Count >= 2) //check if we allready have 2 playears
+                throw new InvalidOperationException("Max 2 players");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = $"Player {game.Players.Count + 1}";
+            }
+
+            game.Players.Add(new Player { Name = name, Score = 0 });
+        }
+
+        public void StartNewRound(Game game)
+        {
+            var round = new Round
+            {
+                RoundNumber = game.Rounds.Count + 1,
+                State = RoundState.InProgress,
+                StartingPlayer = game.CurrentPlayer
+            };
+
+            game.Rounds.Add(round);
+            game.CurrentRoundNumber = round.RoundNumber;
+        }
+
+        public void StartGame(Game game)
+        {
+            if (game.Players.Count != 2)
+                throw new InvalidOperationException("Need 2 players");
+
+            game.State = GameState.InProgress;
+
+            game.CurrentPlayer = game.Players[new Random().Next(2)];
+
+            StartNewRound(game);
+        }
     }
 }
