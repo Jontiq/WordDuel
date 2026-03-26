@@ -30,7 +30,7 @@ namespace WordDuel.BLL.GameLogicServices
             return game;
         }
 
-        public void AddPlayers (Game game, string? name)
+        public void AddPlayer (Game game, string? name)
         {
             name = name?.Trim();
             if (game.Players.Count >= 2) //check if we allready have 2 playears

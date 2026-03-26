@@ -4,7 +4,7 @@ using WordDuel.BLL.GameLogicServices;
 
 namespace WordDuel.UnitTests
 {
-    public class GameLogicServiceTests
+    public class GameServiceTests
     {
         //======================CreateGame===========================================
         [Fact]
@@ -41,7 +41,7 @@ namespace WordDuel.UnitTests
             var service = new GameService();
             var game = service.CreateGame(3);
             // Act
-            service.AddPlayers(game, "Bob");
+            service.AddPlayer(game, "Bob");
             // Assert
             Assert.Single(game.Players);
             Assert.Equal("Bob", game.Players[0].Name);
@@ -54,8 +54,8 @@ namespace WordDuel.UnitTests
             var service = new GameService();
             var game = service.CreateGame(3);
             // Act
-            service.AddPlayers(game, "Bob");
-            service.AddPlayers(game, "Anna");
+            service.AddPlayer(game, "Bob");
+            service.AddPlayer(game, "Anna");
             // Assert
             Assert.Equal(2, game.Players.Count);
             Assert.Equal("Bob", game.Players[0].Name);
@@ -68,11 +68,11 @@ namespace WordDuel.UnitTests
             // Arrange 
             var service = new GameService();
             var game = service.CreateGame(3);      
-            service.AddPlayers(game, "Bob");
-            service.AddPlayers(game, "Anna");
+            service.AddPlayer(game, "Bob");
+            service.AddPlayer(game, "Anna");
 
             // Act + Assert
-            Assert.Throws<InvalidOperationException>(() => service.AddPlayers(game, "Lisa"));
+            Assert.Throws<InvalidOperationException>(() => service.AddPlayer(game, "Lisa"));
         }
 
         [Fact]
@@ -82,11 +82,26 @@ namespace WordDuel.UnitTests
             var service = new GameService();
             var game = service.CreateGame(3);
             //Act
-            service.AddPlayers(game, "");
-            service.AddPlayers(game, null);
+            service.AddPlayer(game, "");
+            service.AddPlayer(game, null);
             //Assert
             Assert.Equal("Player 1", game.Players[0].Name);
             Assert.Equal("Player 2", game.Players[1].Name);
+        }
+
+        [Fact]
+        public void AddPlayer_ShouldTrimName_WhenNameContainsSpaces()
+        {
+            // Arrange
+            var service = new GameService();
+            var game = service.CreateGame(3);
+
+            // Act
+            service.AddPlayer(game, "   Anna   ");
+
+            // Assert
+            Assert.Single(game.Players);
+            Assert.Equal("Anna", game.Players[0].Name);
         }
     }
 }
