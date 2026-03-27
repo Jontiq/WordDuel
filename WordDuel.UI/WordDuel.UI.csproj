@@ -23,4 +23,8 @@
     <ProjectReference Include="..\WordDuel.API\WordDuel.API.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="UI-Tests\" />
+  </ItemGroup>
+
 </Project>
