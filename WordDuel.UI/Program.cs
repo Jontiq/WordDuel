@@ -1,5 +1,5 @@
-using WordDuel.BLL.Repositories;
-using WordDuel.BLL.WordServices;
+//using WordDuel.BLL.Repositories;
+//using WordDuel.BLL.WordServices;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,11 +11,11 @@ builder.Services.AddRazorPages();
 var words = new[] { "STORK", "STÄPP", "SLAPP", "Släppa"};
 
 
-// Registrera repository
-builder.Services.AddSingleton<IWordRepository>(new LocalWordRepository(words));
+//// Registrera repository
+//builder.Services.AddSingleton<IWordRepository>(new LocalWordRepository(words));
 
-// Registrera WordService
-builder.Services.AddSingleton<WordService>();
+//// Registrera WordService
+//builder.Services.AddSingleton<WordService>();
 
 
 var app = builder.Build();
