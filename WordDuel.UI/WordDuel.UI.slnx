@@ -1,7 +1,5 @@
 <Solution>
-  <Project Path="../WordDuel.API/WordDuel.API.csproj" Id="db45bcdf-7438-40f5-bbdc-159ded3b12bb">
-    <Build Solution="Debug|*" Project="false" />
-  </Project>
+  <Project Path="../WordDuel.API/WordDuel.API.csproj" Id="db45bcdf-7438-40f5-bbdc-159ded3b12bb" />
   <Project Path="../WordDuel.BLL/WordDuel.BLL.csproj" Id="817ec614-ae32-4b2d-9d45-d04772396861" />
   <Project Path="../WordDuel.DAL/WordDuel.DAL.csproj" Id="e84407c8-c37e-4bcb-984b-5611db2b6f87" />
   <Project Path="../WordDuel.UI.Tests/WordDuel.UI.Tests.csproj" Id="44c90a0a-07f8-452d-92d2-865699359fcc" />
