@@ -20,4 +20,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\WordDuel.BLL\WordDuel.BLL.csproj" />
+  </ItemGroup>
+
 </Project>
