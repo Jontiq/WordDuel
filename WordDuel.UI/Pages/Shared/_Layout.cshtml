@@ -11,21 +11,29 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <!-- DEV NAVBAR -->
-                <nav class="dev-nav">
-                    <span>GAMESTATE SIM</span>
-                    <button class="dev-btn active" onclick="showState('lobby')">Lobby</button>
-                    <button class="dev-btn" onclick="showState('waiting')">Waiting</button>
-                    <button class="dev-btn" onclick="showState('player-turn')">PlayerTurn</button>
-                    <button class="dev-btn" onclick="showState('spectating')">Spectating</button>
-                    <button class="dev-btn" onclick="showState('round-result')">RoundResult</button>
-                    <button class="dev-btn" onclick="showState('match-result')">MatchResult</button>
-                </nav>
-            </div>
+        <nav class="dev-nav">
+            <span>DEV</span>
+            <button class="dev-btn active" onclick="showState('lobby')">Lobby</button>
+            <button class="dev-btn" onclick="showState('waiting')">Waiting</button>
+            <button class="dev-btn" onclick="showState('player-turn')">PlayerTurn</button>
+            <button class="dev-btn" onclick="showState('spectating')">Spectating</button>
+            <button class="dev-btn" onclick="showState('round-result')">RoundResult</button>
+            <button class="dev-btn" onclick="showState('match-result')">MatchResult</button>
+
+            <div style="flex: 1;"></div>
+            <button class="info-btn" onclick="togglePanel()">&#9432; game info</button>
         </nav>
+
+        <div class="info-panel" id="dev-panel">
+            <div class="info-row"><span class="info-key">game-state</span><span class="info-val" id="di-gamestate">Lobby</span></div>
+            <div class="info-row"><span class="info-key">game-session</span><span class="info-val" id="di-session">null</span></div>
+            <div class="info-row"><span class="info-key">round-state</span><span class="info-val" id="di-roundstate">null</span></div>
+            <div class="info-row"><span class="info-key">current-player</span><span class="info-val" id="di-player">null</span></div>
+        </div>
     </header>
+
+    
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
