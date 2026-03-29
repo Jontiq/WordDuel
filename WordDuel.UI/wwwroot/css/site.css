@@ -518,12 +518,12 @@ body {
     }
 
 @keyframes bounce {
-    0%,80%,100% {
-        transform: translateY(0)
+    0%, 80%, 100% {
+        transform: translateY(0);
     }
 
     40% {
-        transform: translateY(-10px)
+        transform: translateY(-10px);
     }
 }
 
@@ -699,3 +699,4 @@ hr.divider {
     .code-input:focus {
         border-color: var(--teal);
     }
+

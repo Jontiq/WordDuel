@@ -20,7 +20,7 @@
                 <li><span class="rule-icon">1</span>Spelet spelas av två spelare</li>
                 <li><span class="rule-icon">2</span>Ni börjar med ett ord på 5 bokstäver och måste byta ut en bokstav per runda</li>
                 <li><span class="rule-icon">3</span>Ordet måste finnas i svensk ordlista och vara unikt för eran omgång.</li>
-                <li><span class="rule-icon">5</span>Avsluta din tur innan betänketiden tar slut.</li>
+                <li><span class="rule-icon">4</span>Avsluta din tur innan betänketiden tar slut.</li>
             </ul>
         </div>
 
@@ -48,6 +48,7 @@
         </div>
     </div>
 
+    @* KNAPPAR FÖR "JOIN GAME" OCH "HOST GAME" *@
     <div class="row">
         <button class="btn btn-secondary btn-full btn-lg" onclick="showState('waiting')">HOST GAME</button>
         <button class="btn btn-primary btn-full btn-lg" onclick="openJoinModal()">JOIN GAME</button>
@@ -72,5 +73,20 @@
             <button class="btn btn-secondary btn-full" onclick="closeJoinModal()">Avbryt</button>
             <button class="btn btn-primary btn-full" onclick="submitJoinCode()">Gå med</button>
         </div>
+    </div>
+</div>
+
+<!-- STATE: WAITING -->
+<div class="page" id="state-waiting">
+    <div class="card center flex-col" style="gap:24px; align-items:center;">
+        <div class="card-title">Dela koden med din motståndare</div>
+        <div class="room-code" id="room-code">WD-4829</div>
+        <div class="dots">
+            <span></span><span></span><span></span>
+        </div>
+        <p style="color:var(--muted); font-size:14px;">
+            Väntar på att motståndaren ansluter...
+        </p>
+        <button class="btn btn-secondary btn-sm" onclick="showState('lobby')">Avbryt</button>
     </div>
 </div>
