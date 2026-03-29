@@ -3,6 +3,8 @@ using Reqnroll;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace WordDuel.UI.Tests.Tests.Steps
 {
@@ -63,6 +65,39 @@ namespace WordDuel.UI.Tests.Tests.Steps
         {
             await Assertions.Expect(_page.Locator("#di-gamestate"))
                     .ToHaveTextAsync(expectedState);
+        }
+
+        [Then("The join modal is visible")]
+        public async Task ThenTheJoinModalIsVisible()
+        {
+            await Assertions.Expect(_page.Locator("#join-modal"))
+                            .ToHaveClassAsync(new Regex("open"));
+        }
+
+        [Given("The join modal is open")]
+        public async Task GivenTheJoinModalIsOpen()
+        {
+            await _page.Locator("button", new() { HasTextString = "JOIN GAME" }).ClickAsync();
+        }
+
+        [When("I enter the code {string}")]
+        public async Task WhenIEnterTheCode(string code)
+        {
+            await _page.Locator("#join-code-input").FillAsync(code);
+        }
+
+        [Then("The join modal is not visible")]
+        public async Task ThenTheJoinModalIsNotVisible()
+        {
+            await Assertions.Expect(_page.Locator("#join-modal"))
+                            .Not.ToHaveClassAsync(new Regex("open"));
+        }
+
+        [Then("The join modal is still visible")]
+        public async Task ThenTheJoinModalIsStillVisible()
+        {
+            await Assertions.Expect(_page.Locator("#join-modal"))
+                            .ToHaveClassAsync(new Regex("open"));
         }
     }
 }
