@@ -26,6 +26,7 @@
   <ItemGroup>
     <Folder Include="Tests\Features\" />
     <Folder Include="Tests\Steps\" />
+    <Folder Include="Tests\Steps\" />
   </ItemGroup>
 
 </Project>

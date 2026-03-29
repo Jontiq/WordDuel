@@ -4,7 +4,54 @@
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- HEADER (LOGO sen?)-->
+<header class="site-header">
+    <div class="logo">WordDuel<span class="logo-dot"></span></div>
+</header>
+
+<!-- STATE: LOBBY -->
+<div class="page active" id="state-lobby">
+
+    <div class="col">
+        <!-- Regler -->
+        <div class="card">
+            <div class="card-title">Så spelar du</div>
+            <ul class="rule-list">
+                <li>Spelet spelas av två spelare</li>
+                <li>Ni börjar med ett ord på 5 bokstäver och måste byta ut en bokstav per runda</li>
+                <li>Ordet måste finnas i svensk ordlista och vara unikt för eran omgång.</li>
+                <li>Avsluta din tur innan betänketiden tar slut.</li>
+            </ul>
+        </div>
+
+        <!-- Inställningar -->
+        <div class="card">
+            <div class="flex-col">
+                <div>
+                    <div class="card-title">Välj antal set (bäst av)</div>
+                    <div class="option-group" id="sets-group">
+                        <div class="chip selected" onclick="selectChip('sets-group', this)">3 set</div>
+                        <div class="chip" onclick="selectChip('sets-group', this)">5 set</div>
+                        <div class="chip" onclick="selectChip('sets-group', this)">7 set</div>
+                    </div>
+                </div>
+                <hr class="divider" />
+                <div>
+                    <div class="card-title">Betänketid per runda</div>
+                    <div class="option-group" id="time-group">
+                        <div class="chip" onclick="selectChip('time-group', this)">15 sek</div>
+                        <div class="chip selected" onclick="selectChip('time-group', this)">30 sek</div>
+                        <div class="chip" onclick="selectChip('time-group', this)">60 sek</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <button class="btn btn-secondary btn-full btn-lg" onclick="showState('waiting')">HOST GAME</button>
+        <button class="btn btn-primary btn-full btn-lg" onclick="showState('waiting')">JOIN GAME</button>
+    </div>
+    <p class="center" style="font-size:13px; color:var(--muted);">Starta ett nytt spel eller anslut till ett existerande.</p>
+
 </div>
