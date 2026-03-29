@@ -90,3 +90,53 @@
         <button class="btn btn-secondary btn-sm" onclick="showState('lobby')">Avbryt</button>
     </div>
 </div>
+
+<!-- STATE: COIN FLIP -->
+<div class="page" id="state-coin-flip">
+    <div class="card center flex-col" style="align-items:center; gap:24px; padding:40px;">
+
+        <div class="card-title">Vem börjar?</div>
+
+        <!-- Spelare + hjul -->
+        <div style="display:flex; align-items:center; justify-content:center; gap:32px; width:100%;">
+
+            <div class="cf-player" id="cf-player1">
+                <div class="cf-avatar" style="background:var(--teal-light); color:var(--teal-dark);">P1</div>
+                <div class="cf-name">Du</div>
+            </div>
+
+            <!-- Snurrande hjul -->
+            <div class="cf-wheel-wrap">
+                <svg class="cf-wheel" id="cf-wheel" viewBox="0 0 100 100" width="110" height="110">
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--teal-mid)" stroke-width="4" />
+                    <circle cx="50" cy="50" r="6" fill="var(--teal)" />
+                    <!-- Pil -->
+                    <g id="cf-arrow" style="transform-origin:50px 50px;">
+                        <line x1="50" y1="50" x2="50" y2="12" stroke="var(--teal)" stroke-width="4" stroke-linecap="round" />
+                        <polygon points="50,6 45,16 55,16" fill="var(--teal)" />
+                    </g>
+                </svg>
+            </div>
+
+            <div class="cf-player" id="cf-player2">
+                <div class="cf-avatar" style="background:#FFF3E0; color:#E65100;">P2</div>
+                <div class="cf-name">Motståndare</div>
+            </div>
+
+        </div>
+
+        <!-- Resultat (dolt tills pilen stannat) -->
+        <div id="cf-result" style="display:none; text-align:center;">
+            <div class="badge badge-teal" style="font-size:15px; padding:10px 24px;" id="cf-result-text">
+                Du börjar!
+            </div>
+        </div>
+
+        <!-- Countdown -->
+        <div id="cf-countdown" style="display:none; text-align:center;">
+            <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">Matchen startar om</div>
+            <div style="font-size:48px; font-weight:600; font-family:'DM Mono',monospace; color:var(--teal-dark);" id="cf-count">5</div>
+        </div>
+
+    </div>
+</div>
