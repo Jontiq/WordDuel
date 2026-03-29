@@ -646,3 +646,56 @@ hr.divider {
         }
 }
 
+/*JOIN GAME MODAL*/
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+    .modal-overlay.open {
+        display: flex;
+    }
+
+.modal-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrerar allt innehåll horisontellt */
+    text-align: center; /* Centrerar texten i paragrafer/titlar */
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+}
+
+.modal-box .row.mt {
+    flex-direction: column; /* Stapla knapparna */
+    gap: 12px; /* Mellanrum mellan Avbryt och Gå med */
+    width: 100%; /* Låt knapparna ta upp bredden */
+}
+
+.code-input {
+    width: 100%;
+    text-align: center;
+    font-size: 28px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    color: var(--teal-dark);
+    text-transform: uppercase;
+    outline: none;
+}
+
+    .code-input:focus {
+        border-color: var(--teal);
+    }

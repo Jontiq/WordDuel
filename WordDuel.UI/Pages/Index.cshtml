@@ -17,10 +17,10 @@
         <div class="card">
             <div class="card-title">Så spelar du</div>
             <ul class="rule-list">
-                <li>Spelet spelas av två spelare</li>
-                <li>Ni börjar med ett ord på 5 bokstäver och måste byta ut en bokstav per runda</li>
-                <li>Ordet måste finnas i svensk ordlista och vara unikt för eran omgång.</li>
-                <li>Avsluta din tur innan betänketiden tar slut.</li>
+                <li><span class="rule-icon">1</span>Spelet spelas av två spelare</li>
+                <li><span class="rule-icon">2</span>Ni börjar med ett ord på 5 bokstäver och måste byta ut en bokstav per runda</li>
+                <li><span class="rule-icon">3</span>Ordet måste finnas i svensk ordlista och vara unikt för eran omgång.</li>
+                <li><span class="rule-icon">5</span>Avsluta din tur innan betänketiden tar slut.</li>
             </ul>
         </div>
 
@@ -50,8 +50,27 @@
 
     <div class="row">
         <button class="btn btn-secondary btn-full btn-lg" onclick="showState('waiting')">HOST GAME</button>
-        <button class="btn btn-primary btn-full btn-lg" onclick="showState('waiting')">JOIN GAME</button>
+        <button class="btn btn-primary btn-full btn-lg" onclick="openJoinModal()">JOIN GAME</button>
     </div>
     <p class="center" style="font-size:13px; color:var(--muted);">Starta ett nytt spel eller anslut till ett existerande.</p>
 
+</div>
+
+<!-- JOIN GAME MODAL -->
+<div class="modal-overlay" id="join-modal" onclick="closeJoinModal(event)">
+    <div class="modal-box">
+        <div class="card-title">Ange spelkod</div>
+        <p style="font-size:14px; color:var(--muted); margin-bottom:16px;">
+            Be värden om koden och skriv in den nedan.
+        </p>
+        <input type="text"
+               id="join-code-input"
+               class="code-input"
+               maxlength="7"
+               placeholder="WD-0000" />
+        <div class="row mt">
+            <button class="btn btn-secondary btn-full" onclick="closeJoinModal()">Avbryt</button>
+            <button class="btn btn-primary btn-full" onclick="submitJoinCode()">Gå med</button>
+        </div>
+    </div>
 </div>

@@ -20,3 +20,21 @@ function selectChip(groupId, el) {
         .forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
 }
+
+function openJoinModal() {
+    document.getElementById('join-modal').classList.add('open');
+    document.getElementById('join-code-input').focus();
+}
+
+function closeJoinModal(event) {
+    // Stäng bara om man klickar på overlayen, inte på modal-boxen
+    if (event && event.target !== document.getElementById('join-modal')) return;
+    document.getElementById('join-modal').classList.remove('open');
+}
+
+function submitJoinCode() {
+    const code = document.getElementById('join-code-input').value;
+    if (code.length < 7) return;
+    closeJoinModal();
+    showState('waiting');
+}
