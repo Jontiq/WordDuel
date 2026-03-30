@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="UI-Tests\**" />
+    <Content Remove="UI-Tests\**" />
+    <EmbeddedResource Remove="UI-Tests\**" />
+    <None Remove="UI-Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
       <PrivateAssets>all</PrivateAssets>
@@ -21,10 +28,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WordDuel.API\WordDuel.API.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="UI-Tests\" />
   </ItemGroup>
 
 </Project>
