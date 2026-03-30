@@ -6,7 +6,8 @@ namespace WordDuel.BLL.WordServices
 {
     public interface IWordService
     {
-        public bool IsValidWordAsync(string word);
+        Task<bool> IsValidWordAsync(string word);
+        Task<string?> GetRandomWordAsync(int length);
 
     }
 }
