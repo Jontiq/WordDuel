@@ -244,3 +244,25 @@
     </div>
 
 </div>
+
+<!-- STATE: ROUND RESULT -->
+<div class="page" id="state-round-result">
+    <div class="card center flex-col" style="align-items:center; gap:20px; padding:40px;">
+        <div class="badge badge-teal">Set avslutad</div>
+        <div style="font-size:56px;">🎯</div>
+        <div class="result-name" id="rr-result-text">Du vann setet!</div>
+        <hr class="divider" style="width:100%;">
+        <div class="score-row" style="width:100%;">
+            <div class="player-score active-player">
+                <div class="name">Du</div>
+                <div class="pts" id="rr-score-you">0</div>
+            </div>
+            <div class="score-divider">–</div>
+            <div class="player-score">
+                <div class="name">Motståndare</div>
+                <div class="pts" id="rr-score-opponent">0</div>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="showState('coin-flip')">Nästa set →</button>
+    </div>
+</div>
