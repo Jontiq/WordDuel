@@ -140,3 +140,51 @@
 
     </div>
 </div>
+
+
+<!-- STATE: WORD SELECT -->
+<div class="page" id="state-word-select">
+    <div class="card flex-col" style="gap:24px;">
+
+        <div class="badge badge-teal" style="align-self:flex-start;">
+            <span class="badge-dot"></span> Din tur – välj ett startord
+        </div>
+
+        <p class="center" style="color:var(--muted); font-size:14px;">
+            Välj ett av orden nedan för att starta duellen
+        </p>
+
+        <div class="word-cards" id="word-cards">
+            <div class="word-card" onclick="selectWord(this, 'LUNKA')">
+                <div class="word-card-num">1</div>
+                <div class="word-card-letters">LUNKA</div>
+                <button class="btn btn-secondary btn-sm">Välj</button>
+            </div>
+            <div class="word-card" onclick="selectWord(this, 'PESTO')">
+                <div class="word-card-num">2</div>
+                <div class="word-card-letters">PESTO</div>
+                <button class="btn btn-secondary btn-sm">Välj</button>
+            </div>
+            <div class="word-card" onclick="selectWord(this, 'LYCKA')">
+                <div class="word-card-num">3</div>
+                <div class="word-card-letters">LYCKA</div>
+                <button class="btn btn-secondary btn-sm">Välj</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- OPPONENT SELECTING OVERLAY -->
+<div class="modal-overlay" id="opponent-overlay">
+    <div class="modal-box center flex-col" style="align-items:center; gap:16px;">
+        <div class="dots">
+            <span></span><span></span><span></span>
+        </div>
+        <div style="font-size:16px; font-weight:500;" id="opponent-overlay-text">
+            Motståndaren väljer ett startord...
+        </div>
+        <p style="font-size:13px; color:var(--muted);">Vänta medan motståndaren gör sitt val.</p>
+    </div>
+</div>

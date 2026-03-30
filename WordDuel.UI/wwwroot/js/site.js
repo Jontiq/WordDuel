@@ -1,12 +1,12 @@
 ﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
-// Write your JavaScript code.
-
+// ── DEV PANEL ──
 function togglePanel() {
     document.getElementById('dev-panel').classList.toggle('open');
 }
 
+// ── STATE SWITCHER ──
 function showState(name) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
@@ -17,24 +17,23 @@ function showState(name) {
     });
     document.getElementById('di-gamestate').textContent = name;
 
-    // Starta animation automatiskt
     if (name === 'coin-flip') startCoinFlip();
 }
 
-//Löser så att man kan selecta och presentera vad som är selected bättre.
+// ── CHIP SELECTOR ──
 function selectChip(groupId, el) {
     document.querySelectorAll('#' + groupId + ' .chip')
         .forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
 }
 
+// ── JOIN MODAL ──
 function openJoinModal() {
     document.getElementById('join-modal').classList.add('open');
     document.getElementById('join-code-input').focus();
 }
 
 function closeJoinModal(event) {
-    // Stäng bara om man klickar på overlayen, inte på modal-boxen
     if (event && event.target !== document.getElementById('join-modal')) return;
     document.getElementById('join-modal').classList.remove('open');
 }
@@ -46,7 +45,7 @@ function submitJoinCode() {
     showState('waiting');
 }
 
-/*COIN-FLIP*/
+// ── COIN FLIP ──
 function startCoinFlip() {
     const arrow = document.getElementById('cf-arrow');
     const result = document.getElementById('cf-result');
@@ -60,14 +59,13 @@ function startCoinFlip() {
     document.getElementById('cf-player1').classList.remove('winner');
     document.getElementById('cf-player2').classList.remove('winner');
 
+    // Slumpa vinnare – kommer från BLL via SignalR senare
     const winner = Math.random() < 0.5 ? 0 : 1;
 
-    // Inställningar för animationen
+    // 270° = vänster = spelare 1, 90° = höger = spelare 2
     const finalAngle = winner === 0 ? 270 : 90;
-    const extraSpins = 8; // Hur många extra varv den ska snurra (3 * 360)
-    const totalRotation = (extraSpins * 360) + finalAngle;
-
-    const duration = 3500; // Animationen tar 3.5 sekunder
+    const totalRotation = (8 * 360) + finalAngle;
+    const duration = 3500;
     let startTime = null;
 
     function spin(timestamp) {
@@ -75,17 +73,14 @@ function startCoinFlip() {
         const elapsed = timestamp - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Easing-funktion: "Cubic Ease Out"
-        // Formel: 1 - Math.pow(1 - progress, 3)
-        // Ger en kraftig start och en mycket mjuk inbromsning mot slutet
+        // Cubic ease out: kraftig start, mjuk inbromsning
         const easeOut = 1 - Math.pow(1 - progress, 3);
-
-        const currentRotation = totalRotation * easeOut;
-        arrow.style.transform = `rotate(${currentRotation}deg)`;
+        arrow.style.transform = `rotate(${totalRotation * easeOut}deg)`;
 
         if (progress < 1) {
             requestAnimationFrame(spin);
         } else {
+            // Animationen klar – visa resultat
             showCoinFlipResult(winner, result, resultText, countdown, countEl);
         }
     }
@@ -94,13 +89,14 @@ function startCoinFlip() {
 }
 
 function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
-    const winnerEl = document.getElementById(winner === 0 ? 'cf-player1' : 'cf-player2');
-    winnerEl.classList.add('winner');
+    // Highlighta vinnaren
+    document.getElementById(winner === 0 ? 'cf-player1' : 'cf-player2').classList.add('winner');
 
     resultText.textContent = winner === 0 ? 'Du börjar!' : 'Motståndaren börjar!';
     result.style.display = 'block';
     countdown.style.display = 'block';
 
+    // Countdown 5 → 0
     let count = 5;
     countEl.textContent = count;
 
@@ -109,8 +105,37 @@ function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
         countEl.textContent = count;
         if (count <= 0) {
             clearInterval(interval);
-            // Om du börjar -> word-select, annars -> spectating
-            showState(winner === 0 ? 'word-select' : 'spectating');
+            // Navigera till rätt state beroende på vem som vann
+            if (winner === 0) {
+                showState('word-select');
+            } else {
+                showState('spectating');
+                showOpponentOverlay('Motståndaren väljer ett startord...');
+            }
         }
     }, 1000);
+}
+
+// ── WORD SELECT ──
+let selectedWord = null;
+
+function selectWord(cardEl, word) {
+    document.querySelectorAll('.word-card').forEach(c => c.classList.remove('selected'));
+    cardEl.classList.add('selected');
+    selectedWord = word;
+
+    // Kort fördröjning sen gå vidare till spelarens tur
+    setTimeout(() => {
+        showState('player-turn');
+    }, 600);
+}
+
+// ── OPPONENT OVERLAY ──
+function showOpponentOverlay(text) {
+    document.getElementById('opponent-overlay-text').textContent = text;
+    document.getElementById('opponent-overlay').classList.add('open');
+}
+
+function hideOpponentOverlay() {
+    document.getElementById('opponent-overlay').classList.remove('open');
 }
