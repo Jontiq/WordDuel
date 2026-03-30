@@ -31,6 +31,20 @@ namespace WordDuel.DAL.Repositories
             var exists = _words.Contains(word.Trim().ToLower());
             return Task.FromResult(exists);
         }
+
+        public Task<bool> ExistsAsync(string word)
+        {
+            if (string.IsNullOrWhiteSpace(word))
+                return Task.FromResult(false);
+
+            var exists = _words.Contains(word.Trim().ToLower());
+            return Task.FromResult(exists);
+        }
+
+        public Task<IEnumerable<string>> GetAllWordsAsync()
+        {
+            return Task.FromResult<IEnumerable<string>>(_words);
+        }
         
     }
     
