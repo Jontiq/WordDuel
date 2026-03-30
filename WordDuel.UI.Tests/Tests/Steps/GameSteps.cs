@@ -99,5 +99,25 @@ namespace WordDuel.UI.Tests.Tests.Steps
             await Assertions.Expect(_page.Locator("#join-modal"))
                             .ToHaveClassAsync(new Regex("open"));
         }
+
+        [Given("The coin flip result is forced to {string}")]
+        public async Task GivenTheCoinFlipResultIsForcedTo(string winner)
+        {
+            await _page.EvaluateAsync($"setCoinFlipWinner({winner})");
+        }
+
+        [When("The coin flip completes")]
+        public async Task WhenTheCoinFlipCompletes()
+        {
+            await _page.EvaluateAsync("showState('coin-flip')");
+            // Vänta på att animationen + countdownen är klar (3.5s + 5s)
+            await _page.WaitForTimeoutAsync(9000);
+        }
+
+        [When("I click the modal button {string}")]
+        public async Task WhenIClickTheModalButton(string label)
+        {
+            await _page.Locator("#join-modal button", new() { HasTextString = label }).ClickAsync();
+        }
     }
 }

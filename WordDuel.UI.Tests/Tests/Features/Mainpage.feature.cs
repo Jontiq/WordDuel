@@ -307,7 +307,7 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
     await testRunner.AndAsync("The join modal is open", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 35
-    await testRunner.WhenAsync("I click on \"Avbryt\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("I click the modal button \"Avbryt\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 36
     await testRunner.ThenAsync("The join modal is not visible", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");

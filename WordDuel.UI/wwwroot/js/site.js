@@ -8,6 +8,7 @@ function togglePanel() {
 
 // ── STATE SWITCHER ──
 function showState(name) {
+    console.log('showState called with: ' + name);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('state-' + name).classList.add('active');
@@ -46,6 +47,13 @@ function submitJoinCode() {
 }
 
 // ── COIN FLIP ──
+
+// Används av tester för att tvinga ett utfall
+let _coinFlipOverride = null;
+
+function setCoinFlipWinner(winner) {
+    _coinFlipOverride = winner;
+}
 function startCoinFlip() {
     const arrow = document.getElementById('cf-arrow');
     const result = document.getElementById('cf-result');
@@ -59,8 +67,9 @@ function startCoinFlip() {
     document.getElementById('cf-player1').classList.remove('winner');
     document.getElementById('cf-player2').classList.remove('winner');
 
-    // Slumpa vinnare – kommer från BLL via SignalR senare
-    const winner = Math.random() < 0.5 ? 0 : 1;
+    // Slumpa vinnare – kommer från BLL via SignalR senare (Kan anropas av tester just nu)
+    const winner = _coinFlipOverride !== null ? _coinFlipOverride : Math.random() < 0.5 ? 0 : 1;
+
 
     // 270° = vänster = spelare 1, 90° = höger = spelare 2
     const finalAngle = winner === 0 ? 270 : 90;
