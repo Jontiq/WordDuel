@@ -8,6 +8,6 @@ namespace WordDuel.BLL.WordServices
     {
         Task<bool> IsValidWordAsync(string word);
         Task<string?> GetRandomWordAsync(int length);
-
+        Task<bool> OneLetterChangedAsync(string word, string currentWord);
     }
 }

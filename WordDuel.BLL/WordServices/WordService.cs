@@ -36,5 +36,28 @@ namespace WordDuel.BLL.WordServices
             return candidates[random.Next(candidates.Count)];
 
         }
+
+        public Task<bool> OneLetterChangedAsync(string word, string currentWord)
+        {
+            // Kontrollera att orden har samma längd
+            if (word.Length != currentWord.Length)
+                return Task.FromResult(false);
+
+            // Räkna antal skillnader
+            int differences = 0;
+            for (int i = 0; i < word.Length; i++)
+            {
+                if (word[i] != currentWord[i])
+                {
+                    differences++;
+                    if (differences > 1) // Om mer än 1 skillnad, returnera direkt
+                        return Task.FromResult(false);
+                }
+            }
+
+            // Exakt 1 skillnad måste finnas
+            return Task.FromResult(differences == 1);
+        }
+
     }
 }
