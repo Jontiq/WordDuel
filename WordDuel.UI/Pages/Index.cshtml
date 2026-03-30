@@ -4,7 +4,139 @@
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- HEADER (LOGO sen?)-->
+<header class="site-header">
+    <div class="logo">WordDuel<span class="logo-dot"></span></div>
+</header>
+
+<!-- STATE: LOBBY -->
+<div class="page active" id="state-lobby">
+
+    <div class="row">
+        <!-- Regler -->
+        <div class="card">
+            <div class="card-title">Så spelar du</div>
+            <ul class="rule-list">
+                <li><span class="rule-icon">1</span>Spelet spelas av två spelare</li>
+                <li><span class="rule-icon">2</span>Ni börjar med ett ord på 5 bokstäver och måste byta ut en bokstav per runda</li>
+                <li><span class="rule-icon">3</span>Ordet måste finnas i svensk ordlista och vara unikt för eran omgång.</li>
+                <li><span class="rule-icon">4</span>Avsluta din tur innan betänketiden tar slut.</li>
+            </ul>
+        </div>
+
+        <!-- Inställningar -->
+        <div class="card">
+            <div class="flex-col">
+                <div>
+                    <div class="card-title">Välj antal set (bäst av)</div>
+                    <div class="option-group" id="sets-group">
+                        <div class="chip selected" onclick="selectChip('sets-group', this)">3 set</div>
+                        <div class="chip" onclick="selectChip('sets-group', this)">5 set</div>
+                        <div class="chip" onclick="selectChip('sets-group', this)">7 set</div>
+                    </div>
+                </div>
+                <hr class="divider" />
+                <div>
+                    <div class="card-title">Betänketid per runda</div>
+                    <div class="option-group" id="time-group">
+                        <div class="chip" onclick="selectChip('time-group', this)">15 sek</div>
+                        <div class="chip selected" onclick="selectChip('time-group', this)">30 sek</div>
+                        <div class="chip" onclick="selectChip('time-group', this)">60 sek</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* KNAPPAR FÖR "JOIN GAME" OCH "HOST GAME" *@
+    <div class="row">
+        <button class="btn btn-secondary btn-full btn-lg" onclick="showState('waiting')">HOST GAME</button>
+        <button class="btn btn-primary btn-full btn-lg" onclick="openJoinModal()">JOIN GAME</button>
+    </div>
+    <p class="center" style="font-size:13px; color:var(--muted);">Starta ett nytt spel eller anslut till ett existerande.</p>
+
+</div>
+
+<!-- JOIN GAME MODAL -->
+<div class="modal-overlay" id="join-modal" onclick="closeJoinModal(event)">
+    <div class="modal-box">
+        <div class="card-title">Ange spelkod</div>
+        <p style="font-size:14px; color:var(--muted); margin-bottom:16px;">
+            Be värden om koden och skriv in den nedan.
+        </p>
+        <input type="text"
+               id="join-code-input"
+               class="code-input"
+               maxlength="7"
+               placeholder="WD-0000" />
+        <div class="row mt">
+            <button class="btn btn-secondary btn-full" onclick="closeJoinModal()">Avbryt</button>
+            <button class="btn btn-primary btn-full" onclick="submitJoinCode()">Gå med</button>
+        </div>
+    </div>
+</div>
+
+<!-- STATE: WAITING -->
+<div class="page" id="state-waiting">
+    <div class="card center flex-col" style="gap:24px; align-items:center;">
+        <div class="card-title">Dela koden med din motståndare</div>
+        <div class="room-code" id="room-code">WD-4829</div>
+        <div class="dots">
+            <span></span><span></span><span></span>
+        </div>
+        <p style="color:var(--muted); font-size:14px;">
+            Väntar på att motståndaren ansluter...
+        </p>
+        <button class="btn btn-secondary btn-sm" onclick="showState('lobby')">Avbryt</button>
+    </div>
+</div>
+
+<!-- STATE: COIN FLIP -->
+<div class="page" id="state-coin-flip">
+    <div class="card center flex-col" style="align-items:center; gap:24px; padding:40px;">
+
+        <div class="card-title">Vem börjar?</div>
+
+        <!-- Spelare + hjul -->
+        <div style="display:flex; align-items:center; justify-content:center; gap:32px; width:100%;">
+
+            <div class="cf-player" id="cf-player1">
+                <div class="cf-avatar" style="background:var(--teal-light); color:var(--teal-dark);">P1</div>
+                <div class="cf-name">Du</div>
+            </div>
+
+            <!-- Snurrande hjul -->
+            <div class="cf-wheel-wrap">
+                <svg class="cf-wheel" id="cf-wheel" viewBox="0 0 100 100" width="110" height="110">
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="var(--teal-mid)" stroke-width="4" />
+                    <circle cx="50" cy="50" r="6" fill="var(--teal)" />
+                    <!-- Pil -->
+                    <g id="cf-arrow" style="transform-origin:50px 50px;">
+                        <line x1="50" y1="50" x2="50" y2="12" stroke="var(--teal)" stroke-width="4" stroke-linecap="round" />
+                        <polygon points="50,6 45,16 55,16" fill="var(--teal)" />
+                    </g>
+                </svg>
+            </div>
+
+            <div class="cf-player" id="cf-player2">
+                <div class="cf-avatar" style="background:#FFF3E0; color:#E65100;">P2</div>
+                <div class="cf-name">Motståndare</div>
+            </div>
+
+        </div>
+
+        <!-- Resultat (dolt tills pilen stannat) -->
+        <div id="cf-result" style="display:none; text-align:center;">
+            <div class="badge badge-teal" style="font-size:15px; padding:10px 24px;" id="cf-result-text">
+                Du börjar!
+            </div>
+        </div>
+
+        <!-- Countdown -->
+        <div id="cf-countdown" style="display:none; text-align:center;">
+            <div style="font-size:13px; color:var(--muted); margin-bottom:4px;">Matchen startar om</div>
+            <div style="font-size:48px; font-weight:600; font-family:'DM Mono',monospace; color:var(--teal-dark);" id="cf-count">5</div>
+        </div>
+
+    </div>
 </div>

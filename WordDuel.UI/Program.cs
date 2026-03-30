@@ -9,15 +9,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 
-// Hårdkodad ordlista för testning
-var words = new[] { "STORK", "STÄPP", "SLAPP", "Släppa"};
+// HÃ¥rdkodad ordlista fÃ¶r testning
+var words = new[] { "STORK", "STÃ„PP", "SLAPP", "SlÃ¤ppa"};
 
 
 // Registrera repository
 builder.Services.AddSingleton<IWordRepository>(new WordRepository());
 
-// Registrera WordService
-builder.Services.AddSingleton<WordService>();
+//// Registrera WordService
+//builder.Services.AddSingleton<WordService>();
 
 
 var app = builder.Build();
