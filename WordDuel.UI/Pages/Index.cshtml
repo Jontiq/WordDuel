@@ -141,7 +141,6 @@
     </div>
 </div>
 
-
 <!-- STATE: WORD SELECT -->
 <div class="page" id="state-word-select">
     <div class="card flex-col" style="gap:24px;">
@@ -175,7 +174,6 @@
     </div>
 </div>
 
-
 <!-- OPPONENT SELECTING OVERLAY -->
 <div class="modal-overlay" id="opponent-overlay">
     <div class="modal-box center flex-col" style="align-items:center; gap:16px;">
@@ -194,4 +192,55 @@
     <div class="card center">
         <p style="color:var(--muted);">Spectating – kommer snart.</p>
     </div>
+</div>
+
+<!-- STATE: PLAYER TURN -->
+<div class="page" id="state-player-turn">
+
+    <!-- Scoreboard -->
+    <div class="card">
+        <div class="score-row">
+            <div class="player-score active-player">
+                <div class="name">Du</div>
+                <div class="pts" id="pt-score-you">0</div>
+            </div>
+            <div style="text-align:center;">
+                <div class="timer-ring" id="timer-ring">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle class="track" cx="40" cy="40" r="35" />
+                        <circle class="progress" cx="40" cy="40" r="35" id="timer-arc" />
+                    </svg>
+                    <div class="timer-label" id="timer-label">30</div>
+                </div>
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">sekunder</div>
+            </div>
+            <div class="player-score">
+                <div class="name">Motståndare</div>
+                <div class="pts" id="pt-score-opponent">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tiles -->
+    <div class="card center">
+        <div class="badge badge-teal" style="margin-bottom:16px;">
+            <span class="badge-dot"></span> Din tur – byt en bokstav
+        </div>
+        <div class="word-tiles" id="pt-tiles"></div>
+        <p id="pt-feedback" style="font-size:13px; color:var(--muted); min-height:20px; margin-top:8px;"></p>
+    </div>
+
+    <!-- Ordlista -->
+    <div class="card">
+        <div class="card-title">Ord denna omgång</div>
+        <div class="word-history-list" id="pt-word-history"></div>
+    </div>
+
+    <!-- Knappar -->
+    <div class="row">
+        <button class="btn btn-danger btn-full" onclick="showState('round-result')">Ge upp</button>
+        <button class="btn btn-secondary btn-full" id="pt-undo-btn" onclick="undoTileChange()" disabled>Ångra</button>
+        <button class="btn btn-primary btn-full btn-lg" id="pt-submit-btn" onclick="submitWord()" disabled>Klar</button>
+    </div>
+
 </div>

@@ -785,3 +785,38 @@ hr.divider {
     color: var(--teal-dark);
     letter-spacing: 0.05em;
 }
+
+/*PLAYER TURN*/
+.word-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.word-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+    .word-history-item.latest {
+        background: var(--teal-light);
+        border-color: var(--teal-mid);
+        color: var(--teal-dark);
+    }
+
+    .word-history-item .word-meta {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: 'DM Sans', sans-serif;
+        text-transform: none;
+    }

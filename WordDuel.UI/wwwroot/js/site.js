@@ -8,6 +8,8 @@ function togglePanel() {
 
 // ── STATE SWITCHER ──
 function showState(name) {
+    coinFlipActive = false;
+    timerActive = false;
     console.log('showState called with: ' + name);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
@@ -19,6 +21,10 @@ function showState(name) {
     document.getElementById('di-gamestate').textContent = name;
 
     if (name === 'coin-flip') startCoinFlip();
+    if (name === 'player-turn') {
+        wordHistory = [];
+        initPlayerTurn(selectedWord || 'LUNKA');
+    }
 }
 
 // ── CHIP SELECTOR ──
@@ -62,6 +68,8 @@ function startCoinFlip() {
     const countEl = document.getElementById('cf-count');
 
     // Återställ UI
+    coinFlipActive = true;
+    clearInterval(coinFlipInterval);
     result.style.display = 'none';
     countdown.style.display = 'none';
     document.getElementById('cf-player1').classList.remove('winner');
@@ -78,19 +86,17 @@ function startCoinFlip() {
     let startTime = null;
 
     function spin(timestamp) {
+        if (!coinFlipActive) return; // ← avbryt om vi navigerat bort
         if (!startTime) startTime = timestamp;
         const elapsed = timestamp - startTime;
         const progress = Math.min(elapsed / duration, 1);
-
-        // Cubic ease out: kraftig start, mjuk inbromsning
         const easeOut = 1 - Math.pow(1 - progress, 3);
         arrow.style.transform = `rotate(${totalRotation * easeOut}deg)`;
 
         if (progress < 1) {
             requestAnimationFrame(spin);
         } else {
-            // Animationen klar – visa resultat
-            showCoinFlipResult(winner, result, resultText, countdown, countEl);
+            if (coinFlipActive) showCoinFlipResult(winner, result, resultText, countdown, countEl);
         }
     }
 
@@ -109,12 +115,16 @@ function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
     let count = 5;
     countEl.textContent = count;
 
-    const interval = setInterval(() => {
+    coinFlipInterval = setInterval(() => {
+        if (!coinFlipActive) {
+            clearInterval(coinFlipInterval);
+            return;
+        }
         count--;
         countEl.textContent = count;
         if (count <= 0) {
-            clearInterval(interval);
-            // Navigera till rätt state beroende på vem som vann
+            clearInterval(coinFlipInterval);
+            coinFlipActive = false;
             if (winner === 0) {
                 showState('word-select');
             } else {
@@ -147,4 +157,159 @@ function showOpponentOverlay(text) {
 
 function hideOpponentOverlay() {
     document.getElementById('opponent-overlay').classList.remove('open');
+}
+
+// ── PLAYER TURN ──
+let currentWord = [];
+let originalWord = [];
+let changedIndex = null;
+
+function initPlayerTurn(word) {
+    currentWord = word.toUpperCase().split('');
+    originalWord = [...currentWord];
+    changedIndex = null;
+
+    renderTiles();
+    updateButtons();
+    addWordToHistory(word, true);
+    startTimer(30);
+}
+
+function renderTiles() {
+    const container = document.getElementById('pt-tiles');
+    container.innerHTML = '';
+
+    currentWord.forEach((letter, index) => {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        if (index === changedIndex) tile.classList.add('changed');
+
+        const input = document.createElement('input');
+        input.maxLength = 1;
+        input.value = letter;
+
+        // Lås alla andra rutor om en redan är ändrad
+        if (changedIndex !== null && changedIndex !== index) {
+            input.disabled = true;
+            tile.style.opacity = '0.4';
+        }
+
+        input.addEventListener('focus', () => selectTile(index));
+        input.addEventListener('input', (e) => handleTileInput(e, index));
+
+        tile.appendChild(input);
+        container.appendChild(tile);
+    });
+}
+
+function selectTile(index) {
+    if (changedIndex !== null && changedIndex !== index) return;
+}
+
+function handleTileInput(e, index) {
+    const val = e.target.value.toUpperCase().slice(-1);
+    e.target.value = val;
+
+    if (val === originalWord[index]) {
+        // Återställd till original
+        currentWord[index] = val;
+        changedIndex = null;
+    } else {
+        currentWord[index] = val;
+        changedIndex = index;
+    }
+
+    renderTiles();
+    updateButtons();
+
+    // Fokusera rätt input efter re-render
+    const inputs = document.querySelectorAll('#pt-tiles .tile input');
+    if (inputs[index]) inputs[index].focus();
+}
+
+function undoTileChange() {
+    currentWord = [...originalWord];
+    changedIndex = null;
+    renderTiles();
+    updateButtons();
+    document.getElementById('pt-feedback').textContent = '';
+}
+
+function updateButtons() {
+    const hasChange = changedIndex !== null;
+    document.getElementById('pt-submit-btn').disabled = !hasChange;
+    document.getElementById('pt-undo-btn').disabled = !hasChange;
+}
+
+function submitWord() {
+    const word = currentWord.join('');
+    addWordToHistory(word, true);
+    showState('spectating');
+}
+
+// ── ORDHISTORIK ──
+let wordHistory = [];
+
+function addWordToHistory(word, isLatest = false) {
+    // Ta bort latest-markering från tidigare
+    wordHistory = wordHistory.map(w => ({ ...w, latest: false }));
+    wordHistory.unshift({ word, latest: isLatest });
+    renderWordHistory();
+}
+
+function renderWordHistory() {
+    const container = document.getElementById('pt-word-history');
+    if (!container) return;
+    container.innerHTML = '';
+
+    wordHistory.forEach((entry, i) => {
+        const item = document.createElement('div');
+        item.className = 'word-history-item' + (entry.latest ? ' latest' : '');
+
+        const wordSpan = document.createElement('span');
+        wordSpan.textContent = entry.word;
+
+        const meta = document.createElement('span');
+        meta.className = 'word-meta';
+        meta.textContent = i === 0 ? 'senaste' : `#${wordHistory.length - i}`;
+
+        item.appendChild(wordSpan);
+        item.appendChild(meta);
+        container.appendChild(item);
+    });
+}
+
+// ── TIMER ──
+let timerInterval = null;
+let timerActive = false;
+let coinFlipInterval = null;
+let coinFlipActive = false;
+
+function startTimer(seconds) {
+    clearInterval(timerInterval);
+    timerActive = true;
+    let remaining = seconds;
+    const arc = document.getElementById('timer-arc');
+    const label = document.getElementById('timer-label');
+    const circumference = 2 * Math.PI * 35;
+
+    function update() {
+        if (!timerActive) return; // ← avbryt om vi navigerat bort
+
+        const ratio = remaining / seconds;
+        arc.style.strokeDashoffset = circumference * (1 - ratio);
+        arc.style.stroke = remaining <= 10 ? '#A32D2D' : '#1D9E75';
+        label.style.color = remaining <= 10 ? '#A32D2D' : 'var(--text)';
+        label.textContent = remaining;
+
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            timerActive = false;
+            showState('round-result');
+        }
+        remaining--;
+    }
+
+    update();
+    timerInterval = setInterval(update, 1000);
 }
