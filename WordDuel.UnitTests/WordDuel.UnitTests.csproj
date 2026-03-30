@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WordDuel.BLL\WordDuel.BLL.csproj" />
     <ProjectReference Include="..\WordDuel.DAL\WordDuel.DAL.csproj" />
+    <ProjectReference Include="..\WordDuel.Shared\WordDuel.Shared.csproj" />
     <ProjectReference Include="..\WordDuel.UI\WordDuel.UI.csproj" />
   </ItemGroup>
 
