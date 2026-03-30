@@ -1,4 +1,4 @@
-﻿namespace WordDuel.Shared.DTOs;
+﻿namespace WordDuel.Shared.Enums;
 
 public enum MatchState
 {

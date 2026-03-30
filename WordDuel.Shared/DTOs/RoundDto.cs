@@ -1,4 +1,6 @@
-﻿namespace WordDuel.Shared.DTOs;
+using WordDuel.Shared.Enums;
+
+namespace WordDuel.Shared.DTOs;
 
 public class RoundDto
 {
