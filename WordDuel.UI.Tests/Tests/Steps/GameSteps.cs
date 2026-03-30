@@ -99,5 +99,77 @@ namespace WordDuel.UI.Tests.Tests.Steps
             await Assertions.Expect(_page.Locator("#join-modal"))
                             .ToHaveClassAsync(new Regex("open"));
         }
+
+        [Given("The coin flip result is forced to {string}")]
+        public async Task GivenTheCoinFlipResultIsForcedTo(string winner)
+        {
+            await _page.EvaluateAsync($"setCoinFlipWinner({winner})");
+        }
+
+        [When("The coin flip completes")]
+        public async Task WhenTheCoinFlipCompletes()
+        {
+            await _page.EvaluateAsync("showState('coin-flip')");
+            // Vänta på att animationen + countdownen är klar (3.5s + 5s)
+            await _page.WaitForTimeoutAsync(9000);
+        }
+
+        [When("I click the modal button {string}")]
+        public async Task WhenIClickTheModalButton(string label)
+        {
+            await _page.Locator("#join-modal button", new() { HasTextString = label }).ClickAsync();
+        }
+
+        [Given("I navigate to player turn with word {string}")]
+        public async Task GivenINavigateToPlayerTurnWithWord(string word)
+        {
+            await _page.EvaluateAsync($"selectedWord = '{word}'");
+            await _page.EvaluateAsync("showState('player-turn')");
+        }
+
+        [Then("The submit button is disabled")]
+        public async Task ThenTheSubmitButtonIsDisabled()
+        {
+            await Assertions.Expect(_page.Locator("#pt-submit-btn"))
+                            .ToBeDisabledAsync();
+        }
+
+        [Then("The submit button is enabled")]
+        public async Task ThenTheSubmitButtonIsEnabled()
+        {
+            await Assertions.Expect(_page.Locator("#pt-submit-btn"))
+                            .ToBeEnabledAsync();
+        }
+
+        [When("I change letter at position {string} to {string}")]
+        public async Task WhenIChangeLetterAtPositionTo(string position, string letter)
+        {
+            var index = int.Parse(position);
+            var inputs = _page.Locator("#pt-tiles .tile input");
+            await inputs.Nth(index).FillAsync(letter);
+            await inputs.Nth(index).DispatchEventAsync("input");
+        }
+
+        [Then("The other tiles are locked")]
+        public async Task ThenTheOtherTilesAreLocked()
+        {
+            var inputs = _page.Locator("#pt-tiles .tile input[disabled]");
+            var count = await inputs.CountAsync();
+            Assert.That(count, Is.EqualTo(4));
+        }
+
+        [Then("The tile at position {string} shows {string}")]
+        public async Task ThenTheTileAtPositionShows(string position, string letter)
+        {
+            var index = int.Parse(position);
+            var input = _page.Locator("#pt-tiles .tile input").Nth(index);
+            await Assertions.Expect(input).ToHaveValueAsync(letter);
+        }
+
+        [When("The timer expires")]
+        public async Task WhenTheTimerExpires()
+        {
+            await _page.EvaluateAsync("timerActive = false; showState('round-result')");
+        }
     }
 }
