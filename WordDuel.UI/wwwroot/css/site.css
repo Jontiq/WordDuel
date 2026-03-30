@@ -739,3 +739,84 @@ hr.divider {
     align-items: center;
     justify-content: center;
 }
+
+/*WORD SELECT*/
+
+.word-cards {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.word-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 16px;
+    border-radius: var(--radius);
+    border: 2px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+    .word-card:hover {
+        border-color: var(--teal);
+        background: var(--teal-light);
+    }
+
+    .word-card.selected {
+        border-color: var(--teal);
+        background: var(--teal-light);
+    }
+
+.word-card-num {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.word-card-letters {
+    font-size: 32px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+    color: var(--teal-dark);
+    letter-spacing: 0.05em;
+}
+
+/*PLAYER TURN*/
+.word-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.word-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+    .word-history-item.latest {
+        background: var(--teal-light);
+        border-color: var(--teal-mid);
+        color: var(--teal-dark);
+    }
+
+    .word-history-item .word-meta {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: 'DM Sans', sans-serif;
+        text-transform: none;
+    }

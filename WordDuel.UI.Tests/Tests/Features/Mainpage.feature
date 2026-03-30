@@ -32,7 +32,7 @@ Scenario: Click "JOIN GAME" opens modal
 Scenario: Close join modal with cancel
     Given I am on the mainpage
     And The join modal is open
-    When I click on "Avbryt"
+    When I click the modal button "Avbryt"
     Then The join modal is not visible
 
 Scenario: Submit join code navigates to waiting
