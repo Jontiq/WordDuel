@@ -10,6 +10,8 @@ function togglePanel() {
 function showState(name) {
     coinFlipActive = false;
     timerActive = false;
+    spectatingTimerActive = false;
+    clearInterval(spectatingTimerInterval);
     console.log('showState called with: ' + name);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
@@ -25,6 +27,7 @@ function showState(name) {
         wordHistory = [];
         initPlayerTurn(selectedWord || 'LUNKA');
     }
+    if (name === 'spectating') initSpectating();
 }
 
 // ── CHIP SELECTOR ──
@@ -312,4 +315,84 @@ function startTimer(seconds) {
 
     update();
     timerInterval = setInterval(update, 1000);
+}
+
+// ── SPECTATING ──
+function initSpectating() {
+    renderSpectatingTiles();
+    renderSpectatingHistory();
+    startSpectatingTimer(30);
+}
+
+function renderSpectatingTiles() {
+    const container = document.getElementById('sp-tiles');
+    container.innerHTML = '';
+
+    currentWord.forEach((letter) => {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.style.cursor = 'default';
+
+        const input = document.createElement('input');
+        input.maxLength = 1;
+        input.value = letter;
+        input.disabled = true;
+
+        tile.appendChild(input);
+        container.appendChild(tile);
+    });
+}
+
+function renderSpectatingHistory() {
+    const container = document.getElementById('sp-word-history');
+    if (!container) return;
+    container.innerHTML = '';
+
+    wordHistory.forEach((entry, i) => {
+        const item = document.createElement('div');
+        item.className = 'word-history-item' + (entry.latest ? ' latest' : '');
+
+        const wordSpan = document.createElement('span');
+        wordSpan.textContent = entry.word;
+
+        const meta = document.createElement('span');
+        meta.className = 'word-meta';
+        meta.textContent = i === 0 ? 'senaste' : `#${wordHistory.length - i}`;
+
+        item.appendChild(wordSpan);
+        item.appendChild(meta);
+        container.appendChild(item);
+    });
+}
+
+let spectatingTimerInterval = null;
+let spectatingTimerActive = false;
+
+function startSpectatingTimer(seconds) {
+    clearInterval(spectatingTimerInterval);
+    spectatingTimerActive = true;
+    let remaining = seconds;
+    const arc = document.getElementById('sp-timer-arc');
+    const label = document.getElementById('sp-timer-label');
+    const circumference = 2 * Math.PI * 35;
+
+    function update() {
+        if (!spectatingTimerActive) return;
+        const ratio = remaining / seconds;
+        arc.style.strokeDashoffset = circumference * (1 - ratio);
+        arc.style.stroke = remaining <= 10 ? '#A32D2D' : '#1D9E75';
+        label.style.color = remaining <= 10 ? '#A32D2D' : 'var(--text)';
+        label.textContent = remaining;
+
+        if (remaining <= 0) {
+            clearInterval(spectatingTimerInterval);
+            spectatingTimerActive = false;
+            // Motståndaren gick ut på tid – vi vinner
+            showState('round-result');
+        }
+        remaining--;
+    }
+
+    update();
+    spectatingTimerInterval = setInterval(update, 1000);
 }

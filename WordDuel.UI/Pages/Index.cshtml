@@ -189,9 +189,45 @@
 
 <!-- STATE: SPECTATING -->
 <div class="page" id="state-spectating">
-    <div class="card center">
-        <p style="color:var(--muted);">Spectating – kommer snart.</p>
+
+    <!-- Scoreboard -->
+    <div class="card">
+        <div class="score-row">
+            <div class="player-score">
+                <div class="name">Du</div>
+                <div class="pts" id="sp-score-you">0</div>
+            </div>
+            <div style="text-align:center;">
+                <div class="timer-ring">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle class="track" cx="40" cy="40" r="35" />
+                        <circle class="progress" cx="40" cy="40" r="35" id="sp-timer-arc" />
+                    </svg>
+                    <div class="timer-label" id="sp-timer-label">30</div>
+                </div>
+                <div style="font-size:11px; color:var(--muted); margin-top:4px;">sekunder</div>
+            </div>
+            <div class="player-score active-player">
+                <div class="name">Motståndare</div>
+                <div class="pts" id="sp-score-opponent">0</div>
+            </div>
+        </div>
     </div>
+
+    <!-- Tiles (ej klickbara) -->
+    <div class="card center">
+        <div class="badge badge-amber" style="margin-bottom:16px;">
+            <span class="badge-dot"></span> Motståndarens tur – byter en bokstav
+        </div>
+        <div class="word-tiles" id="sp-tiles"></div>
+    </div>
+
+    <!-- Ordlista -->
+    <div class="card">
+        <div class="card-title">Ord denna omgång</div>
+        <div class="word-history-list" id="sp-word-history"></div>
+    </div>
+
 </div>
 
 <!-- STATE: PLAYER TURN -->
