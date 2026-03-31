@@ -171,5 +171,70 @@ namespace WordDuel.UI.Tests.Tests.Steps
         {
             await _page.EvaluateAsync("timerActive = false; showState('round-result')");
         }
+
+        [Given("I navigate to spectating")]
+        public async Task GivenINavigateToSpectating()
+        {
+            await _page.EvaluateAsync("showState('spectating')");
+        }
+
+        [Then("All tiles are disabled")]
+        public async Task ThenAllTilesAreDisabled()
+        {
+            var tiles = _page.Locator("#sp-tiles .tile input");
+            var count = await tiles.CountAsync();
+            for (int i = 0; i < count; i++)
+            {
+                await Assertions.Expect(tiles.Nth(i)).ToBeDisabledAsync();
+            }
+        }
+
+        [Then("The submit button is not visible")]
+        public async Task ThenTheSubmitButtonIsNotVisible()
+        {
+            await Assertions.Expect(_page.Locator("#pt-submit-btn"))
+                            .Not.ToBeVisibleAsync();
+        }
+
+        [Then("The undo button is not visible")]
+        public async Task ThenTheUndoButtonIsNotVisible()
+        {
+            await Assertions.Expect(_page.Locator("#pt-undo-btn"))
+                            .Not.ToBeVisibleAsync();
+        }
+
+        [Then("The give up button is not visible")]
+        public async Task ThenTheGiveUpButtonIsNotVisible()
+        {
+            await Assertions.Expect(_page.Locator("button", new() { HasTextString = "Ge upp" }))
+                            .Not.ToBeVisibleAsync();
+        }
+
+        [Then("The opponent turn badge is visible")]
+        public async Task ThenTheOpponentTurnBadgeIsVisible()
+        {
+            await Assertions.Expect(_page.Locator(".badge-amber"))
+                            .ToBeVisibleAsync();
+        }
+
+        [When("The opponent is selecting a start word")]
+        public async Task WhenTheOpponentIsSelectingAStartWord()
+        {
+            await _page.EvaluateAsync("showOpponentOverlay('Motståndaren väljer ett startord...')");
+        }
+
+        [Then("The opponent overlay is visible")]
+        public async Task ThenTheOpponentOverlayIsVisible()
+        {
+            await Assertions.Expect(_page.Locator("#opponent-overlay"))
+                            .ToHaveClassAsync(new Regex("open"));
+        }
+
+        [Then("The opponent overlay shows {string}")]
+        public async Task ThenTheOpponentOverlayShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#opponent-overlay-text"))
+                            .ToHaveTextAsync(text);
+        }
     }
 }
