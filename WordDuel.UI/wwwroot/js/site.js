@@ -8,26 +8,44 @@ function togglePanel() {
 
 // ── STATE SWITCHER ──
 function showState(name) {
+    clearInterval(nextRoundInterval);
+    clearInterval(timerInterval);
+    clearInterval(coinFlipInterval);
+    clearInterval(spectatingTimerInterval);
+    hideOpponentOverlay();
     coinFlipActive = false;
     timerActive = false;
     spectatingTimerActive = false;
-    clearInterval(spectatingTimerInterval);
+    
+
     console.log('showState called with: ' + name);
+
+    // Hantera synlighet för sidor och knappar
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
+
     document.getElementById('state-' + name).classList.add('active');
+
     document.querySelectorAll('.dev-btn').forEach(b => {
         if (b.textContent.toLowerCase().replace(/\s/g, '') === name.replace('-', ''))
             b.classList.add('active');
     });
+
     document.getElementById('di-gamestate').textContent = name;
 
+    // Specifik initiering per state
     if (name === 'coin-flip') startCoinFlip();
     if (name === 'player-turn') {
         wordHistory = [];
         initPlayerTurn(selectedWord || 'LUNKA');
     }
     if (name === 'spectating') initSpectating();
+
+    // NYTT: Nu byter vi bara till vyn, men anropar inte initRoundResult härifrån
+    if (name === 'round-result') {
+        // initRoundResult anropas separat av spelflödet eller tester
+        console.log('Switched to round-result view. Waiting for external data init...');
+    }
 }
 
 // ── CHIP SELECTOR ──
@@ -395,4 +413,87 @@ function startSpectatingTimer(seconds) {
 
     update();
     spectatingTimerInterval = setInterval(update, 1000);
+}
+
+// ── ROUND RESULT ──
+let scores = { you: 0, opponent: 0 };
+let roundsToWin = 2; // bäst av 3 = 2, bäst av 5 = 3 osv – kommer från lobby-valet senare
+
+function initRoundResult(youWon, reason) {
+    if (youWon) {
+        scores.you++;
+        document.getElementById('rr-result-text').textContent = 'Du vann setet!';
+        document.getElementById('rr-icon').textContent = '🎯';
+        document.getElementById('rr-score-you-card').classList.add('active-player');
+        document.getElementById('rr-score-opponent-card').classList.remove('active-player');
+    } else {
+        scores.opponent++;
+        document.getElementById('rr-result-text').textContent = 'Motståndaren vann setet!';
+        document.getElementById('rr-icon').textContent = '😔';
+        document.getElementById('rr-score-you-card').classList.remove('active-player');
+        document.getElementById('rr-score-opponent-card').classList.add('active-player');
+    }
+
+    document.getElementById('rr-reason').textContent = reason || '';
+    document.getElementById('rr-score-you').textContent = scores.you;
+    document.getElementById('rr-score-opponent').textContent = scores.opponent;
+
+    renderPips();
+
+    // Kolla om matchen är slut
+    const matchOver = scores.you >= roundsToWin || scores.opponent >= roundsToWin;
+    const btn = document.getElementById('rr-next-btn');
+
+    if (matchOver) {
+        btn.textContent = 'Se resultat →';
+        btn.style.display = 'block';
+        btn.disabled = false;
+        countdownText.style.display = 'none';
+    } else {
+        btn.style.display = 'none';
+        startNextRoundCountdown();
+    }
+}
+
+let nextRoundInterval = null;
+
+function startNextRoundCountdown() {
+    let count = 10;
+    const btn = document.getElementById('rr-next-btn');
+    const countdownText = document.getElementById('rr-countdown-text');
+
+    btn.style.display = 'none';
+    countdownText.style.display = 'block';
+    countdownText.textContent = `Nästa set startar om ${count} sekunder...`;
+
+    nextRoundInterval = setInterval(() => {
+        count--;
+        countdownText.textContent = `Nästa set startar om ${count} sekunder...`;
+        if (count <= 0) {
+            clearInterval(nextRoundInterval);
+            showState('coin-flip');
+        }
+    }, 1000);
+}
+
+function renderPips() {
+    const container = document.getElementById('rr-pips');
+    const label = document.getElementById('rr-pip-label');
+    container.innerHTML = '';
+    label.textContent = `Poäng (bäst av ${roundsToWin * 2 - 1})`;
+
+    for (let i = 0; i < roundsToWin * 2 - 1; i++) {
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (i < scores.you ? ' won' : '');
+        container.appendChild(pip);
+    }
+}
+
+function onRoundResultNext() {
+    const matchOver = scores.you >= roundsToWin || scores.opponent >= roundsToWin;
+    if (matchOver) {
+        showState('match-result');
+    } else {
+        showState('coin-flip');
+    }
 }

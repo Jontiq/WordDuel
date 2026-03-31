@@ -30,7 +30,7 @@ namespace WordDuel.UI.Tests.Tests.Features
         private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Tests/Features", "Spectating", "Through the spectation the player will be able to view the opponents actions live" +
                 ", but not make any changes to the game", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
-#line 1 "Feature1.feature"
+#line 1 "Spectating.feature"
 #line hidden
         
         [global::NUnit.Framework.OneTimeSetUpAttribute()]
@@ -106,7 +106,7 @@ namespace WordDuel.UI.Tests.Tests.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Tests/Features/Feature1.feature.ndjson", 6);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Tests/Features/Spectating.feature.ndjson", 6);
         }
         
         [global::NUnit.Framework.TestAttribute()]

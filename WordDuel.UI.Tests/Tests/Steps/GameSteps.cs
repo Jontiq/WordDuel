@@ -236,5 +236,73 @@ namespace WordDuel.UI.Tests.Tests.Steps
             await Assertions.Expect(_page.Locator("#opponent-overlay-text"))
                             .ToHaveTextAsync(text);
         }
+
+        [Given("I navigate to round result where I won")]
+        public async Task GivenINavigateToRoundResultWhereIWon()
+        {
+            await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("initRoundResult(true, 'Motståndaren gick ut på tid.')");
+        }
+
+        [Given("I navigate to round result where I lost")]
+        public async Task GivenINavigateToRoundResultWhereILost()
+        {
+            await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("initRoundResult(false, 'Du gick ut på tid.')");
+        }
+
+        [Given("The match is won by the player")]
+        public async Task GivenTheMatchIsWonByThePlayer()
+        {
+            await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
+            // Simulera att spelaren vunnit 2 set i rad
+            await _page.EvaluateAsync("scores.you = 1");
+            await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("initRoundResult(true, '')");
+        }
+
+        [Then("The result text shows {string}")]
+        public async Task ThenTheResultTextShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#rr-result-text"))
+                            .ToHaveTextAsync(text);
+        }
+
+        [Then("The player score shows {string}")]
+        public async Task ThenThePlayerScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#rr-score-you"))
+                            .ToHaveTextAsync(score);
+        }
+
+        [Then("The opponent score shows {string}")]
+        public async Task ThenTheOpponentScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#rr-score-opponent"))
+                            .ToHaveTextAsync(score);
+        }
+
+        [Then("The next button shows {string}")]
+        public async Task ThenTheNextButtonShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#rr-next-btn"))
+                            .ToHaveTextAsync(text);
+        }
+
+        [When("I click the next round button")]
+        public async Task WhenIClickTheNextRoundButton()
+        {
+            await _page.Locator("#rr-next-btn").ClickAsync();
+        }
+
+        [Then("The game-state eventually becomes {string}")]
+        public async Task ThenTheGameStateEventuallyBecomes(string expectedState)
+        {
+            await Assertions.Expect(_page.Locator("#di-gamestate"))
+                            .ToHaveTextAsync(expectedState, new() { Timeout = 15000 });
+        }
     }
 }
