@@ -15,85 +15,79 @@ public class MatchServiceTests
 
     private MatchDto CreateMatchWithTwoPlayers()
     {
-        var match = service.CreateMatch(3);
-        service.AddPlayer(match, "A");
-        service.AddPlayer(match, "B");
+        var match = service.CreateMatch(3, "A");
+        service.JoinMatch(match, "B");
         return match;
     }
 
     [Fact]
-    public void CreateMatch_ShouldReturnMatchWithCorrectRoundsToWinAndWaitingForPlayersState()
+    public void CreateMatch_ShouldReturnMatchWithFirstPlayerAndWaitingForPlayersState()
     {
-        var result = service.CreateMatch(3);
+        var result = service.CreateMatch(3, "Anna");
 
         Assert.NotNull(result);
         Assert.Equal(3, result.RoundsToWin);
         Assert.Equal(MatchState.WaitingForPlayers, result.State);
+        Assert.Single(result.Players);
+        Assert.Equal("Anna", result.Players[0].Name);
+        Assert.Equal(1, result.Players[0].Id);
     }
 
     [Fact]
     public void CreateMatch_ShouldThrowException_WhenRoundsToWinIsLessThanOrEqualToZero()
     {
-        Assert.Throws<ArgumentException>(() => service.CreateMatch(0));
+        Assert.Throws<ArgumentException>(() => service.CreateMatch(0, "Anna"));
     }
 
     [Fact]
-    public void AddPlayer_ShouldAddPlayerToMatch()
+    public void CreateMatch_ShouldAssignDefaultName_WhenNameIsEmpty()
     {
-        var match = service.CreateMatch(3);
-
-        service.AddPlayer(match, "A");
+        var match = service.CreateMatch(3, "");
 
         Assert.Single(match.Players);
-        Assert.Equal("A", match.Players[0].Name);
+        Assert.Equal("Player 1", match.Players[0].Name);
     }
 
     [Fact]
-    public void AddPlayer_ShouldAddTwoPlayersToMatch()
+    public void JoinMatch_ShouldAddSecondPlayer()
     {
-        var match = CreateMatchWithTwoPlayers();
+        var match = service.CreateMatch(3, "A");
+
+        service.JoinMatch(match, "B");
 
         Assert.Equal(2, match.Players.Count);
-        Assert.Equal("A", match.Players[0].Name);
         Assert.Equal("B", match.Players[1].Name);
+        Assert.Equal(2, match.Players[1].Id);
     }
 
     [Fact]
-    public void AddPlayer_ShouldThrowException_WhenAddingThreePlayers()
+    public void JoinMatch_ShouldThrowException_WhenMatchAlreadyHasTwoPlayers()
     {
         var match = CreateMatchWithTwoPlayers();
 
-        Assert.Throws<InvalidOperationException>(() => service.AddPlayer(match, "Lisa"));
+        Assert.Throws<InvalidOperationException>(() => service.JoinMatch(match, "Lisa"));
     }
 
     [Fact]
-    public void AddPlayer_ShouldAssignDefaultName_WhenNameIsEmpty()
+    public void CanJoinMatch_ShouldReturnTrue_WhenThereIsRoomForOneMorePlayer()
     {
-        var match = service.CreateMatch(3);
+        var match = service.CreateMatch(3, "A");
 
-        service.AddPlayer(match, "");
-        service.AddPlayer(match, null);
-
-        Assert.Equal("Player 1", match.Players[0].Name);
-        Assert.Equal("Player 2", match.Players[1].Name);
+        Assert.True(service.CanJoinMatch(match));
     }
 
     [Fact]
-    public void AddPlayer_ShouldTrimName_WhenNameContainsSpaces()
+    public void IsMatchReadyToStart_ShouldReturnTrue_WhenTwoPlayersHaveJoined()
     {
-        var match = service.CreateMatch(3);
+        var match = CreateMatchWithTwoPlayers();
 
-        service.AddPlayer(match, "   Anna   ");
-
-        Assert.Single(match.Players);
-        Assert.Equal("Anna", match.Players[0].Name);
+        Assert.True(service.IsMatchReadyToStart(match));
     }
 
     [Fact]
     public void StartMatch_ShouldThrowException_WhenLessThanTwoPlayers()
     {
-        var match = service.CreateMatch(3);
-        service.AddPlayer(match, "Anna");
+        var match = service.CreateMatch(3, "Anna");
 
         Assert.Throws<InvalidOperationException>(() => service.StartMatch(match));
     }
@@ -120,72 +114,19 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void StartMatch_ShouldCreateFirstRound()
+    public void StartNewRound_ShouldSetCorrectRoundData()
     {
         var match = CreateMatchWithTwoPlayers();
-
         service.StartMatch(match);
 
+        service.StartNewRound(match, "stark");
+
         Assert.Single(match.Rounds);
-        Assert.Equal(1, match.CurrentRoundNumber);
-    }
-
-    [Fact]
-    public void StartNewRound_ShouldSetCorrectRoundNumber()
-    {
-        var match = CreateMatchWithTwoPlayers();
-        match.CurrentPlayer = match.Players[0];
-
-        service.StartNewRound(match);
-
         Assert.Equal(1, match.Rounds[0].RoundNumber);
-    }
-
-    [Fact]
-    public void StartNewRound_ShouldSetRoundStateToInProgress()
-    {
-        var match = CreateMatchWithTwoPlayers();
-        match.CurrentPlayer = match.Players[0];
-
-        service.StartNewRound(match);
-
+        Assert.Equal("stark", match.Rounds[0].StartingWord);
+        Assert.Equal("stark", match.Rounds[0].CurrentWord);
         Assert.Equal(RoundState.InProgress, match.Rounds[0].State);
-    }
-
-    [Fact]
-    public void StartNewRound_ShouldSetStartingPlayer()
-    {
-        var match = CreateMatchWithTwoPlayers();
-        var currentPlayer = match.Players[1];
-        match.CurrentPlayer = currentPlayer;
-
-        service.StartNewRound(match);
-
-        Assert.Equal(currentPlayer, match.Rounds[0].StartingPlayer);
-    }
-
-    [Fact]
-    public void StartNewRound_ShouldUpdateCurrentRoundNumber()
-    {
-        var match = CreateMatchWithTwoPlayers();
-        match.CurrentPlayer = match.Players[0];
-
-        service.StartNewRound(match);
-
-        Assert.Equal(1, match.CurrentRoundNumber);
-    }
-
-    [Fact]
-    public void StartNewRound_ShouldIncrementRoundNumber_WhenMultipleRounds()
-    {
-        var match = CreateMatchWithTwoPlayers();
-        match.CurrentPlayer = match.Players[0];
-
-        service.StartNewRound(match);
-        service.StartNewRound(match);
-
-        Assert.Equal(2, match.Rounds.Count);
-        Assert.Equal(2, match.Rounds[1].RoundNumber);
+        Assert.Equal("stark", match.Rounds[0].UsedWords[0]);
     }
 
     [Fact]
@@ -193,6 +134,58 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
 
-        Assert.Throws<InvalidOperationException>(() => service.StartNewRound(match));
+        Assert.Throws<InvalidOperationException>(() => service.StartNewRound(match, "stark"));
+    }
+
+    [Fact]
+    public void SwitchTurn_ShouldChangeCurrentPlayerToTheOtherPlayer()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        match.CurrentPlayer = match.Players[0];
+
+        service.SwitchTurn(match);
+
+        Assert.Equal(match.Players[1].Id, match.CurrentPlayer?.Id);
+    }
+
+    [Fact]
+    public void EndRound_ShouldIncreaseWinnerScoreAndFinishRound()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        service.StartNewRound(match, "stark");
+
+        service.EndRound(match, match.Players[0].Id);
+
+        Assert.Equal(1, match.Players[0].Score);
+        Assert.Equal(RoundState.Finished, match.Rounds[0].State);
+        Assert.Equal(match.Players[0].Id, match.Rounds[0].Winner?.Id);
+    }
+
+    [Fact]
+    public void EndRound_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        service.StartNewRound(match, "stark");
+        match.Players[0].Score = 2;
+
+        service.EndRound(match, match.Players[0].Id);
+
+        Assert.Equal(MatchState.Finished, match.State);
+        Assert.Equal(match.Players[0].Id, match.Winner?.Id);
+        Assert.Null(match.CurrentPlayer);
+    }
+
+    [Fact]
+    public void EndRound_ShouldSetLoserAsNextCurrentPlayer_WhenMatchContinues()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        service.StartNewRound(match, "stark");
+
+        service.EndRound(match, match.Players[0].Id);
+
+        Assert.Equal(match.Players[1].Id, match.CurrentPlayer?.Id);
     }
 }
