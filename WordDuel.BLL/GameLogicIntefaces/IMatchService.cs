@@ -4,8 +4,16 @@ namespace WordDuel.BLL.GameLogicIntefaces;
 
 public interface IMatchService
 {
-    MatchDto CreateMatch(int roundsToWin);
-    void AddPlayer(MatchDto match, string? name);
+    MatchDto CreateMatch(int roundsToWin, string? firstPlayerName);
+    MatchDto JoinMatch(MatchDto match, string? secondPlayerName);
+
     void StartMatch(MatchDto match);
-    void StartNewRound(MatchDto match);
+    void StartNewRound(MatchDto match, string startingWord);
+
+    void SwitchTurn(MatchDto match);
+    void EndRound(MatchDto match, int winnerPlayerId);
+
+    bool CanJoinMatch(MatchDto match);
+    bool IsMatchReadyToStart(MatchDto match);
+    bool IsMatchFinished(MatchDto match);
 }

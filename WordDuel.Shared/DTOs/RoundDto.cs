@@ -16,4 +16,5 @@ public class RoundDto
     public PlayerDto? Winner { get; set; }
 
     public List<MoveDto> Moves { get; set; } = new();
+    public List<string> UsedWords { get; set; } = new();
 }
