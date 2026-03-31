@@ -313,10 +313,11 @@
 
 <!-- STATE: MATCH RESULT -->
 <div class="page" id="state-match-result">
-    <div class="card center flex-col" style="align-items:center; gap:20px; padding:40px;">
+    <div class="card center flex-col" style="align-items:center; gap:24px; padding:40px;">
         <div class="badge badge-teal">Match avslutad</div>
-        <div style="font-size:72px;">🏆</div>
+        <div style="font-size:72px;" id="mr-icon">🏆</div>
         <div class="result-name" id="mr-result-text">Du vann matchen!</div>
+        <p style="font-size:14px; color:var(--muted);" id="mr-reason"></p>
         <hr class="divider" style="width:100%;">
         <div class="score-row" style="width:100%;">
             <div class="player-score" id="mr-score-you-card">
@@ -329,6 +330,10 @@
                 <div class="pts" id="mr-score-opponent">0</div>
             </div>
         </div>
-        <button class="btn btn-primary btn-lg btn-full" onclick="showState('lobby')">Börja om</button>
+        <div>
+            <div class="label center" id="mr-pip-label">Poäng (bäst av 3)</div>
+            <div class="pip-row" id="mr-pips"></div>
+        </div>
+        <button class="btn btn-primary btn-lg btn-full" onclick="resetGame()">Till lobbyn</button>
     </div>
 </div>

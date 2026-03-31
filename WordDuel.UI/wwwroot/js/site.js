@@ -46,6 +46,8 @@ function showState(name) {
         // initRoundResult anropas separat av spelflödet eller tester
         console.log('Switched to round-result view. Waiting for external data init...');
     }
+
+    if (name === 'match-result') initMatchResult();
 }
 
 // ── CHIP SELECTOR ──
@@ -420,6 +422,8 @@ let scores = { you: 0, opponent: 0 };
 let roundsToWin = 2; // bäst av 3 = 2, bäst av 5 = 3 osv – kommer från lobby-valet senare
 
 function initRoundResult(youWon, reason) {
+    const btn = document.getElementById('rr-next-btn');
+    const countdownText = document.getElementById('rr-countdown-text');
     if (youWon) {
         scores.you++;
         document.getElementById('rr-result-text').textContent = 'Du vann setet!';
@@ -442,7 +446,7 @@ function initRoundResult(youWon, reason) {
 
     // Kolla om matchen är slut
     const matchOver = scores.you >= roundsToWin || scores.opponent >= roundsToWin;
-    const btn = document.getElementById('rr-next-btn');
+    
 
     if (matchOver) {
         btn.textContent = 'Se resultat →';
@@ -496,4 +500,44 @@ function onRoundResultNext() {
     } else {
         showState('coin-flip');
     }
+}
+
+
+// ── MATCH RESULT ──
+function initMatchResult() {
+    const youWon = scores.you >= roundsToWin;
+
+    document.getElementById('mr-icon').textContent = youWon ? '🏆' : '😔';
+    document.getElementById('mr-result-text').textContent = youWon ? 'Du vann matchen!' : 'Motståndaren vann matchen!';
+    document.getElementById('mr-score-you').textContent = scores.you;
+    document.getElementById('mr-score-opponent').textContent = scores.opponent;
+    document.getElementById('mr-pip-label').textContent = `Poäng (bäst av ${roundsToWin * 2 - 1})`;
+
+    const youCard = document.getElementById('mr-score-you-card');
+    const opponentCard = document.getElementById('mr-score-opponent-card');
+    youCard.classList.toggle('active-player', youWon);
+    opponentCard.classList.toggle('active-player', !youWon);
+
+    renderMatchPips();
+}
+
+function renderMatchPips() {
+    const container = document.getElementById('mr-pips');
+    container.innerHTML = '';
+
+    for (let i = 0; i < roundsToWin * 2 - 1; i++) {
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (i < scores.you ? ' won' : '');
+        container.appendChild(pip);
+    }
+}
+
+function resetGame() {
+    scores = { you: 0, opponent: 0 };
+    wordHistory = [];
+    selectedWord = null;
+    changedIndex = null;
+    currentWord = [];
+    originalWord = [];
+    showState('lobby');
 }

@@ -304,5 +304,44 @@ namespace WordDuel.UI.Tests.Tests.Steps
             await Assertions.Expect(_page.Locator("#di-gamestate"))
                             .ToHaveTextAsync(expectedState, new() { Timeout = 15000 });
         }
+
+        [Given("The player has won the match")]
+        public async Task GivenThePlayerHasWonTheMatch()
+        {
+            await _page.EvaluateAsync("scores = { you: 2, opponent: 1 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
+            await _page.EvaluateAsync("showState('match-result')");
+            await _page.EvaluateAsync("initMatchResult()");
+        }
+
+        [Given("The opponent has won the match")]
+        public async Task GivenTheOpponentHasWonTheMatch()
+        {
+            await _page.EvaluateAsync("scores = { you: 1, opponent: 2 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
+            await _page.EvaluateAsync("showState('match-result')");
+            await _page.EvaluateAsync("initMatchResult()");
+        }
+
+        [Then("The match result text shows {string}")]
+        public async Task ThenTheMatchResultTextShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#mr-result-text"))
+                            .ToHaveTextAsync(text);
+        }
+
+        [Then("The final player score shows {string}")]
+        public async Task ThenTheFinalPlayerScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#mr-score-you"))
+                            .ToHaveTextAsync(score);
+        }
+
+        [Then("The final opponent score shows {string}")]
+        public async Task ThenTheFinalOpponentScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#mr-score-opponent"))
+                            .ToHaveTextAsync(score);
+        }
     }
 }
