@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using WordDuel.DAL.Data;
 using WordDuel.DAL.Interfaces;
 using WordDuel.DAL.Models;
 
@@ -8,34 +10,23 @@ namespace WordDuel.DAL.Repositories
 {
     public class MatchRepository : IMatchRepository
     {
-        public Task<MatchModel> CreateAsync(MatchModel match)
+        private readonly AppDbContext _context;
+
+        public MatchRepository(AppDbContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
         }
 
-        public Task<bool> DeleteAsync(int id)
+        public async Task<MatchModel?> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<MatchModel>> GetActiveMatchesAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<MatchModel>> GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<MatchModel?> GetByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<MatchModel> UpdateAsync(MatchModel match)
-        {
-            throw new NotImplementedException();
+            return await _context.Matches
+                .Include(m => m.Players)
+                .Include(m => m.Rounds)
+                    .ThenInclude(r => r.Moves)
+                .Include(m => m.CurrentPlayer)
+                .Include(m => m.CurrentRound)
+                .Include(m => m.WinnerPlayer)
+                .FirstOrDefaultAsync(m => m.Id == id);
         }
     }
 }
