@@ -300,4 +300,98 @@ public class MatchServiceTests
     }
 
 
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldUpdateCurrentWord_WhenMoveIsValid()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+        service.StartNewRound(match, "stark");
+
+        await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
+
+        Assert.Equal("start", match.Rounds[0].CurrentWord);
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldAddMove_WhenMoveIsValid()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+        service.StartNewRound(match, "stark");
+
+        await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
+
+        Assert.Single(match.Rounds[0].Moves);
+        Assert.Equal("start", match.Rounds[0].Moves[0].Word);
+        Assert.Equal(match.Players[0].Id, match.Rounds[0].Moves[0].Player?.Id);
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldSwitchTurn_WhenMoveIsValid()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+        service.StartNewRound(match, "stark");
+
+        await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
+
+        Assert.Equal(match.Players[1].Id, match.CurrentPlayer?.Id);
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenWrongPlayerTriesToPlay()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+        service.StartNewRound(match, "stark");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.SubmitMoveAsync(match, match.Players[1].Id, "start"));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenWordIsInvalid()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+        service.StartNewRound(match, "stark");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.SubmitMoveAsync(match, match.Players[0].Id, "zzzzz"));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenMoreThanOneLetterIsChanged()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+        service.StartNewRound(match, "stark");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.SubmitMoveAsync(match, match.Players[0].Id, "sport"));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenWordHasAlreadyBeenUsed()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+        service.StartNewRound(match, "stark");
+
+        await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
+
+        match.CurrentPlayer = match.Players[0];
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.SubmitMoveAsync(match, match.Players[0].Id, "start"));
+    }
+
+
 }
