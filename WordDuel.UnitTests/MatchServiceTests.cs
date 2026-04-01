@@ -1,4 +1,6 @@
 using WordDuel.BLL.GameLogicServices;
+using WordDuel.BLL.WordServices;
+using WordDuel.DAL.Repositories;
 using WordDuel.Shared.DTOs;
 using WordDuel.Shared.Enums;
 
@@ -10,7 +12,10 @@ public class MatchServiceTests
 
     public MatchServiceTests()
     {
-        service = new MatchService(new Random());
+        var fakeRepo = new FakeWordRepository();// Using fakeRepo to avoid dependency on actual data source,
+                                                // making tests faster and more reliable.
+        var wordService = new WordService(fakeRepo);
+        service = new MatchService(wordService, new Random());
     }
 
     private MatchDto CreateMatchWithTwoPlayers()
