@@ -1,4 +1,7 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using WordDuel.BLL.GameLogicIntefaces;
+using WordDuel.BLL.WordServices;
 using WordDuel.Shared.DTOs;
 using WordDuel.Shared.Enums;
 
@@ -6,12 +9,15 @@ namespace WordDuel.BLL.GameLogicServices;
 
 public class MatchService : IMatchService
 {
+    private readonly IWordService _wordService;
     private readonly Random _random;
 
-    public MatchService(Random random)
+    public MatchService(IWordService wordService, Random random)
     {
+        _wordService = wordService;
         _random = random;
     }
+
 
     // Creates a new match and immediately adds the first player.
     // The match starts in WaitingForPlayers because player 2 has not joined yet.
@@ -163,4 +169,74 @@ public class MatchService : IMatchService
             Score = 0
         };
     }
+
+
+    public async Task SubmitMoveAsync(MatchDto match, int playerId, string word)
+    {
+        //If the match is not in progress, the move should not be allowed.
+        if (match.State != MatchState.InProgress)
+            throw new InvalidOperationException("Match is not in progress.");
+        //A player cannot make a move if no round has started.
+        if (match.Rounds.Count == 0)
+            throw new InvalidOperationException("No active round.");
+        //The last round is the active one.
+        var round = match.Rounds.Last();
+        //If the round is already finished, reject the move.
+        if (round.State != RoundState.InProgress)
+            throw new InvalidOperationException("Round is not active.");
+        //Only CurrentPlayer is allowed to submit a move.
+        if (match.CurrentPlayer == null || match.CurrentPlayer.Id != playerId)
+            throw new InvalidOperationException("It is not this player's turn.");
+        //Word must be provided and cannot be just whitespace.
+        if (string.IsNullOrWhiteSpace(word))
+            throw new ArgumentException("Word is required.", nameof(word));
+
+        var normalizedWord = word.Trim().ToLowerInvariant();
+
+        if (normalizedWord.Length != round.CurrentWord.Length)
+            throw new InvalidOperationException("Word must have the same length as the current word.");
+
+        if (!await _wordService.IsValidWordAsync(normalizedWord))
+            throw new InvalidOperationException("Word is not valid.");
+
+        if (!await _wordService.OneLetterChangedAsync(normalizedWord, round.CurrentWord))
+            throw new InvalidOperationException("Exactly one letter must be changed.");
+
+        if (round.UsedWords.Contains(normalizedWord))
+            throw new InvalidOperationException("Word has already been used in this round.");
+        // If all checks pass, we create a new move and update the round state accordingly.
+        var move = new MoveDto
+        {
+            MoveNumber = round.Moves.Count + 1,
+            Word = normalizedWord,
+            Player = match.CurrentPlayer
+        };
+
+        round.Moves.Add(move);
+        round.UsedWords.Add(normalizedWord);
+        round.CurrentWord = normalizedWord;//This becomes the new active word for the next player.
+
+        SwitchTurn(match); //After a valid move, next player gets the turn.
+    }
+
+    //If a player gives up:
+    //that player loses the round
+    //the other player wins
+    //call EndRound(match, winnerId)
+    public void GiveUpRound(MatchDto match, int playerId)
+    {
+        var winner = match.Players.Single(p => p.Id != playerId);
+        EndRound(match, winner.Id);
+    }
+
+    //f a player’s time runs out:
+    //that player loses the round
+    //the other player wins
+    //call EndRound(match, winnerId)
+    public void HandleTurnTimeout(MatchDto match, int playerId)
+    {
+        var winner = match.Players.Single(p => p.Id != playerId);
+        EndRound(match, winner.Id);
+    }
+
 }
