@@ -171,5 +171,177 @@ namespace WordDuel.UI.Tests.Tests.Steps
         {
             await _page.EvaluateAsync("timerActive = false; showState('round-result')");
         }
+
+        [Given("I navigate to spectating")]
+        public async Task GivenINavigateToSpectating()
+        {
+            await _page.EvaluateAsync("showState('spectating')");
+        }
+
+        [Then("All tiles are disabled")]
+        public async Task ThenAllTilesAreDisabled()
+        {
+            var tiles = _page.Locator("#sp-tiles .tile input");
+            var count = await tiles.CountAsync();
+            for (int i = 0; i < count; i++)
+            {
+                await Assertions.Expect(tiles.Nth(i)).ToBeDisabledAsync();
+            }
+        }
+
+        [Then("The submit button is not visible")]
+        public async Task ThenTheSubmitButtonIsNotVisible()
+        {
+            await Assertions.Expect(_page.Locator("#pt-submit-btn"))
+                            .Not.ToBeVisibleAsync();
+        }
+
+        [Then("The undo button is not visible")]
+        public async Task ThenTheUndoButtonIsNotVisible()
+        {
+            await Assertions.Expect(_page.Locator("#pt-undo-btn"))
+                            .Not.ToBeVisibleAsync();
+        }
+
+        [Then("The give up button is not visible")]
+        public async Task ThenTheGiveUpButtonIsNotVisible()
+        {
+            await Assertions.Expect(_page.Locator("button", new() { HasTextString = "Ge upp" }))
+                            .Not.ToBeVisibleAsync();
+        }
+
+        [Then("The opponent turn badge is visible")]
+        public async Task ThenTheOpponentTurnBadgeIsVisible()
+        {
+            await Assertions.Expect(_page.Locator(".badge-amber"))
+                            .ToBeVisibleAsync();
+        }
+
+        [When("The opponent is selecting a start word")]
+        public async Task WhenTheOpponentIsSelectingAStartWord()
+        {
+            await _page.EvaluateAsync("showOpponentOverlay('Motståndaren väljer ett startord...')");
+        }
+
+        [Then("The opponent overlay is visible")]
+        public async Task ThenTheOpponentOverlayIsVisible()
+        {
+            await Assertions.Expect(_page.Locator("#opponent-overlay"))
+                            .ToHaveClassAsync(new Regex("open"));
+        }
+
+        [Then("The opponent overlay shows {string}")]
+        public async Task ThenTheOpponentOverlayShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#opponent-overlay-text"))
+                            .ToHaveTextAsync(text);
+        }
+
+        [Given("I navigate to round result where I won")]
+        public async Task GivenINavigateToRoundResultWhereIWon()
+        {
+            await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("initRoundResult(true, 'Motståndaren gick ut på tid.')");
+        }
+
+        [Given("I navigate to round result where I lost")]
+        public async Task GivenINavigateToRoundResultWhereILost()
+        {
+            await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("initRoundResult(false, 'Du gick ut på tid.')");
+        }
+
+        [Given("The match is won by the player")]
+        public async Task GivenTheMatchIsWonByThePlayer()
+        {
+            await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
+            // Simulera att spelaren vunnit 2 set i rad
+            await _page.EvaluateAsync("scores.you = 1");
+            await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("initRoundResult(true, '')");
+        }
+
+        [Then("The result text shows {string}")]
+        public async Task ThenTheResultTextShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#rr-result-text"))
+                            .ToHaveTextAsync(text);
+        }
+
+        [Then("The player score shows {string}")]
+        public async Task ThenThePlayerScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#rr-score-you"))
+                            .ToHaveTextAsync(score);
+        }
+
+        [Then("The opponent score shows {string}")]
+        public async Task ThenTheOpponentScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#rr-score-opponent"))
+                            .ToHaveTextAsync(score);
+        }
+
+        [Then("The next button shows {string}")]
+        public async Task ThenTheNextButtonShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#rr-next-btn"))
+                            .ToHaveTextAsync(text);
+        }
+
+        [When("I click the next round button")]
+        public async Task WhenIClickTheNextRoundButton()
+        {
+            await _page.Locator("#rr-next-btn").ClickAsync();
+        }
+
+        [Then("The game-state eventually becomes {string}")]
+        public async Task ThenTheGameStateEventuallyBecomes(string expectedState)
+        {
+            await Assertions.Expect(_page.Locator("#di-gamestate"))
+                            .ToHaveTextAsync(expectedState, new() { Timeout = 15000 });
+        }
+
+        [Given("The player has won the match")]
+        public async Task GivenThePlayerHasWonTheMatch()
+        {
+            await _page.EvaluateAsync("scores = { you: 2, opponent: 1 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
+            await _page.EvaluateAsync("showState('match-result')");
+            await _page.EvaluateAsync("initMatchResult()");
+        }
+
+        [Given("The opponent has won the match")]
+        public async Task GivenTheOpponentHasWonTheMatch()
+        {
+            await _page.EvaluateAsync("scores = { you: 1, opponent: 2 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
+            await _page.EvaluateAsync("showState('match-result')");
+            await _page.EvaluateAsync("initMatchResult()");
+        }
+
+        [Then("The match result text shows {string}")]
+        public async Task ThenTheMatchResultTextShows(string text)
+        {
+            await Assertions.Expect(_page.Locator("#mr-result-text"))
+                            .ToHaveTextAsync(text);
+        }
+
+        [Then("The final player score shows {string}")]
+        public async Task ThenTheFinalPlayerScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#mr-score-you"))
+                            .ToHaveTextAsync(score);
+        }
+
+        [Then("The final opponent score shows {string}")]
+        public async Task ThenTheFinalOpponentScoreShows(string score)
+        {
+            await Assertions.Expect(_page.Locator("#mr-score-opponent"))
+                            .ToHaveTextAsync(score);
+        }
     }
 }
