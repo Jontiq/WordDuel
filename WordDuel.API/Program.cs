@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WordDuel.DAL.Data;
+using WordDuel.DAL.Interfaces;
+using WordDuel.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,9 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection")));
+
+builder.Services.AddScoped<IMatchRepository, MatchRepository>();
+builder.Services.AddSingleton<IWordRepository, WordRepository>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
