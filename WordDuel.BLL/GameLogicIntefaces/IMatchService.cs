@@ -16,4 +16,8 @@ public interface IMatchService
     bool CanJoinMatch(MatchDto match);
     bool IsMatchReadyToStart(MatchDto match);
     bool IsMatchFinished(MatchDto match);
+
+    Task SubmitMoveAsync(MatchDto match, int playerId, string word);
+    void GiveUpRound(MatchDto match, int playerId);
+    void HandleTurnTimeout(MatchDto match, int playerId);
 }
