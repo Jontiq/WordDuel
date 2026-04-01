@@ -281,24 +281,59 @@
 
 </div>
 
-<!-- STATE: ROUND RESULT -->
+<!-- STATE: ROUND RESULT(NOTERA HÅRDKODNING GÄLLANDE VEM SOM VANN JUST NU OCH BÄST AV) -->
 <div class="page" id="state-round-result">
-    <div class="card center flex-col" style="align-items:center; gap:20px; padding:40px;">
+    <div class="card center flex-col" style="align-items:center; gap:24px; padding:40px;">
         <div class="badge badge-teal">Set avslutad</div>
-        <div style="font-size:56px;">🎯</div>
+        <div style="font-size:56px;" id="rr-icon">🎯</div>
         <div class="result-name" id="rr-result-text">Du vann setet!</div>
+        <p style="font-size:14px; color:var(--muted);" id="rr-reason">Motståndaren gick ut på tid.</p>
         <hr class="divider" style="width:100%;">
         <div class="score-row" style="width:100%;">
-            <div class="player-score active-player">
+            <div class="player-score" id="rr-score-you-card">
                 <div class="name">Du</div>
                 <div class="pts" id="rr-score-you">0</div>
             </div>
             <div class="score-divider">–</div>
-            <div class="player-score">
+            <div class="player-score" id="rr-score-opponent-card">
                 <div class="name">Motståndare</div>
                 <div class="pts" id="rr-score-opponent">0</div>
             </div>
         </div>
-        <button class="btn btn-primary btn-lg" onclick="showState('coin-flip')">Nästa set →</button>
+        <div>
+            <div class="label center" id="rr-pip-label">Poäng (bäst av 3)</div>
+            <div class="pip-row" id="rr-pips"></div>
+        </div>
+        <p id="rr-countdown-text" style="font-size:14px; color:var(--muted); display:none;"></p>
+        <button class="btn btn-primary btn-lg" id="rr-next-btn" onclick="onRoundResultNext()">
+            Se resultat →
+        </button>
+    </div>
+</div>
+
+<!-- STATE: MATCH RESULT -->
+<div class="page" id="state-match-result">
+    <div class="card center flex-col" style="align-items:center; gap:24px; padding:40px;">
+        <div class="badge badge-teal">Match avslutad</div>
+        <div style="font-size:72px;" id="mr-icon">🏆</div>
+        <div class="result-name" id="mr-result-text">Du vann matchen!</div>
+        <p style="font-size:14px; color:var(--muted);" id="mr-reason"></p>
+        <hr class="divider" style="width:100%;">
+        <div class="score-row" style="width:100%;">
+            <div class="player-score" id="mr-score-you-card">
+                <div class="name">Du</div>
+                <div class="pts" id="mr-score-you">0</div>
+            </div>
+            <div class="score-divider">–</div>
+            <div class="player-score" id="mr-score-opponent-card">
+                <div class="name">Motståndare</div>
+                <div class="pts" id="mr-score-opponent">0</div>
+            </div>
+        </div>
+        <div>
+            <div class="label center" id="mr-pip-label">Poäng (bäst av 3)</div>
+            <div class="pip-row" id="mr-pips"></div>
+        </div>
+        <button class="btn btn-primary btn-lg btn-full" onclick="resetGame()">Till lobbyn</button>
     </div>
 </div>
