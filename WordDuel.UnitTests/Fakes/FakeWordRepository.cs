@@ -2,6 +2,10 @@
 
 namespace WordDuel.UnitTests.Fakes;
 
+// This fake repository is only used in tests.
+// It lets us control which words exist without needing the real database
+// or the real text file, which makes the tests easier and more reliable.
+
 public class FakeWordRepository : IWordRepository
 {
     private readonly HashSet<string> _words = new(StringComparer.OrdinalIgnoreCase)
