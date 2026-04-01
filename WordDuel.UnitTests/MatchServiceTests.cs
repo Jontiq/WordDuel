@@ -3,6 +3,7 @@ using WordDuel.BLL.WordServices;
 using WordDuel.DAL.Repositories;
 using WordDuel.Shared.DTOs;
 using WordDuel.Shared.Enums;
+using WordDuel.UnitTests.Fakes;
 
 namespace WordDuel.UnitTests;
 
