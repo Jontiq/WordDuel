@@ -247,4 +247,57 @@ public class MatchServiceTests
         Assert.Equal(match.Players[0].Id, match.CurrentPlayer?.Id);
     }
 
+    [Fact]
+    public void HandleTurnTimeout_ShouldMakeOtherPlayerWinRound()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        service.StartNewRound(match, "stark");
+
+        service.HandleTurnTimeout(match, match.Players[0].Id);
+
+        Assert.Equal(RoundState.Finished, match.Rounds[0].State);
+        Assert.Equal(match.Players[1].Id, match.Rounds[0].Winner?.Id);
+    }
+
+    [Fact]
+    public void HandleTurnTimeout_ShouldIncreaseWinnersScore()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        service.StartNewRound(match, "stark");
+
+        service.HandleTurnTimeout(match, match.Players[0].Id);
+
+        Assert.Equal(1, match.Players[1].Score);
+    }
+
+    [Fact]
+    public void HandleTurnTimeout_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        service.StartNewRound(match, "stark");
+
+        match.Players[1].Score = 2;
+
+        service.HandleTurnTimeout(match, match.Players[0].Id);
+
+        Assert.Equal(MatchState.Finished, match.State);
+        Assert.Equal(match.Players[1].Id, match.Winner?.Id);
+    }
+
+    [Fact]
+    public void HandleTurnTimeout_ShouldSetLoserAsNextCurrentPlayer_WhenMatchContinues()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        service.StartNewRound(match, "stark");
+
+        service.HandleTurnTimeout(match, match.Players[0].Id);
+
+        Assert.Equal(match.Players[0].Id, match.CurrentPlayer?.Id);
+    }
+
+
 }
