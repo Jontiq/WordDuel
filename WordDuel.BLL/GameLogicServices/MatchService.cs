@@ -62,7 +62,7 @@ public class MatchService : IMatchService
     // Creates a new round inside the match.
     // The current player becomes the starting player for the round.
     // StartingWord is the first word of the round and CurrentWord begins with the same value.
-    public async Task StartNewRoundAsync(MatchDto match, int wordLength)
+    public async Task StartNewRoundAsync(MatchDto match, string startingWord)
     {
         if (match.State != MatchState.InProgress)
             throw new InvalidOperationException("Match must be in progress before starting a round.");
@@ -70,12 +70,15 @@ public class MatchService : IMatchService
         if (match.CurrentPlayer == null)
             throw new InvalidOperationException("CurrentPlayer must be set before starting a new round.");
 
-        var startingWord = await _wordService.GetRandomWordAsync(wordLength);
-
+        // ? VALIDERA ATT ORDET ÄR GILTIGT
         if (string.IsNullOrWhiteSpace(startingWord))
-            throw new InvalidOperationException("Could not get a valid starting word.");
+            throw new ArgumentException("Starting word is required.", nameof(startingWord));
 
         var normalizedWord = startingWord.Trim().ToLowerInvariant();
+
+        // ? VALIDERA ATT ORDET FINNS I ORDLISTAN
+        if (!await _wordService.IsValidWordAsync(normalizedWord))
+            throw new InvalidOperationException("Starting word is not valid.");
 
         var round = new RoundDto
         {
@@ -90,6 +93,8 @@ public class MatchService : IMatchService
 
         match.Rounds.Add(round);
         match.CurrentRoundNumber = round.RoundNumber;
+
+        Console.WriteLine($"? Round {round.RoundNumber} started with word: {normalizedWord}");
     }
 
 

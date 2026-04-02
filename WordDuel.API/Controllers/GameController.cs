@@ -120,7 +120,7 @@ public class GameController : ControllerBase
         if (match == null)
             return NotFound("Rummet hittades inte.");
 
-        await _matchService.StartNewRoundAsync(match, request.Word.Length);
+        await _matchService.StartNewRoundAsync(match, request.Word);
 
         return Ok(new
         {

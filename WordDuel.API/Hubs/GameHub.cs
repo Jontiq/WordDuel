@@ -82,6 +82,8 @@ public class GameHub : Hub
         await Clients.Group(roomCode).SendAsync("OnCoinFlipResult", starterIndex);
     }
 
+
+
     // ── GET START WORDS ──
     public async Task GetStartWords(string roomCode)
     {
@@ -102,7 +104,7 @@ public class GameHub : Hub
         var match = _sessionStore.Get(roomCode);
         if (match == null) return;
 
-        await _matchService.StartNewRoundAsync(match, word.Length);
+        await _matchService.StartNewRoundAsync(match, word);
 
         // Efter StartNewRound är CurrentPlayer den som börjar – skicka index
         var nextPlayerIndex = match.Players.IndexOf(match.CurrentPlayer!);
