@@ -1,37 +1,65 @@
+using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
+using WordDuel.API.Hubs;
+using WordDuel.BLL.GameLogicIntefaces;
+using WordDuel.BLL.GameLogicServices;
+using WordDuel.BLL.WordServices;
 using WordDuel.DAL.Data;
 using WordDuel.DAL.Interfaces;
 using WordDuel.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Controllers + OpenAPI
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection")));
-
-builder.Services.AddScoped<IMatchRepository, MatchRepository>();
-builder.Services.AddSingleton<IWordRepository, WordRepository>();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<SessionStore>();
+
+// SignalR
+builder.Services.AddSignalR();
+
+// CORS – tillåt UI att ansluta - LÄGGA IN VÅRAN PORT!!!!!!
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("UIPolicy", policy =>
+    {
+        policy.WithOrigins("https://localhost:7057")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AppDbConnection")));
+
+// DAL
+builder.Services.AddScoped<IMatchRepository, MatchRepository>();
+builder.Services.AddSingleton<IWordRepository, WordRepository>();
+
+// BLL
+builder.Services.AddScoped<IMatchService, MatchService>();
+builder.Services.AddScoped<IWordService, WordService>();
+builder.Services.AddSingleton<SessionStore>();
+builder.Services.AddTransient<Random>();
+
 var app = builder.Build();
 
-// Automatisk migration vid start (Development)
+// Migrationer
 if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate(); // Kör alla pending migrations automatiskt
+        db.Database.Migrate();
     }
 }
 
-// Configure the HTTP request pipeline.
+// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -40,9 +68,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors("UIPolicy");
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<GameHub>("/gameHub");
 
 app.Run();
