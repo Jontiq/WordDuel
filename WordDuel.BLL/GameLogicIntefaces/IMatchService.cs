@@ -8,7 +8,7 @@ public interface IMatchService
     MatchDto JoinMatch(MatchDto match, string? secondPlayerName);
 
     void StartMatch(MatchDto match);
-    Task StartNewRoundAsync(MatchDto match, int wordLength);
+    Task StartNewRoundAsync(MatchDto match, string startingWord);
 
     void SwitchTurn(MatchDto match);
     void EndRound(MatchDto match, int winnerPlayerId);
