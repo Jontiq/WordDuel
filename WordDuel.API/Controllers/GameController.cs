@@ -114,13 +114,13 @@ public class GameController : ControllerBase
 
     // POST /api/game/{roomCode}/selectword
     [HttpPost("{roomCode}/selectword")]
-    public IActionResult SelectWord(string roomCode, [FromBody] SelectWordRequest request)
+    public async Task <IActionResult> SelectWord(string roomCode, [FromBody] SelectWordRequest request)
     {
         var match = _sessionStore.Get(roomCode);
         if (match == null)
             return NotFound("Rummet hittades inte.");
 
-        _matchService.StartNewRound(match, request.Word);
+        await _matchService.StartNewRoundAsync(match, request.Word.Length);
 
         return Ok(new
         {
