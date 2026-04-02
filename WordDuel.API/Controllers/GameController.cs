@@ -1,0 +1,219 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using WordDuel.BLL.GameLogicIntefaces;
+using WordDuel.BLL.GameLogicServices;
+using WordDuel.BLL.WordServices;
+using WordDuel.Shared.DTOs;
+
+namespace WordDuel.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class GameController : ControllerBase
+{
+    private readonly IMatchService _matchService;
+    private readonly IWordService _wordService;
+    private readonly SessionStore _sessionStore;
+
+    public GameController(IMatchService matchService, IWordService wordService, SessionStore sessionStore)
+    {
+        _matchService = matchService;
+        _wordService = wordService;
+        _sessionStore = sessionStore;
+    }
+
+    // POST /api/game/host
+    [HttpPost("host")]
+    public IActionResult HostGame([FromBody] HostGameRequest request)
+    {
+        var match = _matchService.CreateMatch(request.RoundsToWin, request.PlayerName);
+
+        var roomCode = GenerateRoomCode();
+        match.RoomCode = roomCode;
+
+        _sessionStore.Add(roomCode, match);
+
+        return Ok(new { roomCode, matchId = match.Id });
+    }
+
+    // POST /api/game/join/{roomCode}
+    [HttpPost("join/{roomCode}")]
+    public IActionResult JoinGame(string roomCode, [FromBody] JoinGameRequest request)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        if (!_matchService.CanJoinMatch(match))
+            return BadRequest("Rummet är fullt.");
+
+        _matchService.JoinMatch(match, request.PlayerName);
+
+        return Ok(new { roomCode, matchId = match.Id });
+    }
+
+    // GET /api/game/{roomCode}
+    [HttpGet("{roomCode}")]
+    public IActionResult GetMatch(string roomCode)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        return Ok(new
+        {
+            roomCode = match.RoomCode,
+            state = match.State.ToString(),
+            roundsToWin = match.RoundsToWin,
+            currentRound = match.CurrentRoundNumber,
+            currentPlayer = match.CurrentPlayer?.Name,
+            players = match.Players.Select(p => new { p.Name, p.Score }),
+            currentWord = match.Rounds.LastOrDefault()?.CurrentWord
+        });
+    }
+
+    // POST /api/game/{roomCode}/startmatch
+    [HttpPost("{roomCode}/startmatch")]
+    public IActionResult StartMatch(string roomCode)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        if (!_matchService.IsMatchReadyToStart(match))
+            return BadRequest("Matchen är inte redo att starta.");
+
+        _matchService.StartMatch(match);
+
+        var starterIndex = match.Players.IndexOf(match.CurrentPlayer!);
+
+        return Ok(new
+        {
+            starterIndex,
+            starterName = match.CurrentPlayer!.Name
+        });
+    }
+
+    // GET /api/game/{roomCode}/startwords
+    [HttpGet("{roomCode}/startwords")]
+    public async Task<IActionResult> GetStartWords(string roomCode)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        var words = new List<string>();
+        while (words.Count < 3)
+        {
+            var word = await _wordService.GetRandomWordAsync(5);
+            if (word != null && !words.Contains(word))
+                words.Add(word);
+        }
+
+        return Ok(new { words });
+    }
+
+    // POST /api/game/{roomCode}/selectword
+    [HttpPost("{roomCode}/selectword")]
+    public IActionResult SelectWord(string roomCode, [FromBody] SelectWordRequest request)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        _matchService.StartNewRound(match, request.Word);
+
+        return Ok(new
+        {
+            word = request.Word,
+            currentPlayer = match.CurrentPlayer?.Name
+        });
+    }
+
+    // POST /api/game/{roomCode}/submitword
+    [HttpPost("{roomCode}/submitword")]
+    public async Task<IActionResult> SubmitWord(string roomCode, [FromBody] SubmitWordRequest request)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        try
+        {
+            await _matchService.SubmitMoveAsync(match, request.PlayerId, request.Word);
+
+            return Ok(new
+            {
+                word = request.Word,
+                nextPlayer = match.CurrentPlayer?.Name,
+                matchFinished = _matchService.IsMatchFinished(match)
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    // POST /api/game/{roomCode}/giveup
+    [HttpPost("{roomCode}/giveup")]
+    public IActionResult GiveUp(string roomCode, [FromBody] PlayerActionRequest request)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        _matchService.GiveUpRound(match, request.PlayerId);
+
+        return Ok(BuildRoundOrMatchResult(match, "Spelaren gav upp."));
+    }
+
+    // POST /api/game/{roomCode}/timerexpired
+    [HttpPost("{roomCode}/timerexpired")]
+    public IActionResult TimerExpired(string roomCode, [FromBody] PlayerActionRequest request)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null)
+            return NotFound("Rummet hittades inte.");
+
+        _matchService.HandleTurnTimeout(match, request.PlayerId);
+
+        return Ok(BuildRoundOrMatchResult(match, "Tiden rann ut."));
+    }
+
+    // ── HJÄLPMETODER ──
+    private object BuildRoundOrMatchResult(MatchDto match, string reason)
+    {
+        if (_matchService.IsMatchFinished(match))
+        {
+            return new
+            {
+                matchFinished = true,
+                winner = match.Winner?.Name,
+                scores = match.Players.Select(p => new { p.Name, p.Score }),
+                reason
+            };
+        }
+
+        return new
+        {
+            matchFinished = false,
+            roundWinner = match.Players.OrderByDescending(p => p.Score).First().Name,
+            scores = match.Players.Select(p => new { p.Name, p.Score }),
+            nextPlayer = match.CurrentPlayer?.Name,
+            reason
+        };
+    }
+
+    private static string GenerateRoomCode()
+    {
+        var number = Random.Shared.Next(1000, 9999);
+        return $"WD-{number}";
+    }
+}
+
+// ── REQUEST MODELS ──
+public record HostGameRequest(int RoundsToWin, string PlayerName);
+public record JoinGameRequest(string PlayerName);
+public record SelectWordRequest(string Word);
+public record SubmitWordRequest(int PlayerId, string Word);
+public record PlayerActionRequest(int PlayerId);
