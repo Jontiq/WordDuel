@@ -149,9 +149,36 @@ public class GameHub : Hub
         var match = _sessionStore.Get(roomCode);
         if (match == null) return;
 
-        _matchService.GiveUpRound(match, match.CurrentPlayer!.Id);
+        var playerWhoGaveUp = match.CurrentPlayer!; //Spara innan GiveUpRound ändrar CurrentPlayer
 
-        await NotifyRoundOrMatchResult(match, roomCode, "Motståndaren gav upp.");
+        _matchService.GiveUpRound(match, playerWhoGaveUp.Id);
+
+        // Efter GiveUpRound: match.CurrentPlayer = förloraren, winner = den andra
+        var winner = match.Players.First(p => p.Id != playerWhoGaveUp.Id);
+
+
+        if (_matchService.IsMatchFinished(match))
+        {
+            // Match över - skicka till alla
+            await Clients.Group(roomCode).SendAsync("OnMatchResult", new
+            {
+                winnerId = match.Winner!.Id,
+                winnerName = match.Winner!.Name,
+                scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList()
+            });
+        }
+        else
+        {
+            //Skicka OnRoundResult med playerWhoGaveUpId
+            await Clients.Group(roomCode).SendAsync("OnRoundResult", new
+            {
+                winnerId = winner.Id,
+                winnerName = winner.Name,
+                scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList(),
+                reason = "gaveUp",                        //Flagga för att identifiera give-up
+                playerWhoGaveUpId = playerWhoGaveUp.Id    //Vem som gav upp
+            });
+        }
     }
 
     // ── TIMER EXPIRED ──
@@ -160,10 +187,33 @@ public class GameHub : Hub
         var match = _sessionStore.Get(roomCode);
         if (match == null) return;
 
-        // match.CurrentPlayer är spelaren vars tid gick ut – korrekt
-        _matchService.HandleTurnTimeout(match, match.CurrentPlayer!.Id);
+        var playerWhoTimedOut = match.CurrentPlayer!;//Spara innan CurrentPlayer ändras
 
-        await NotifyRoundOrMatchResult(match, roomCode, "Tiden rann ut.");
+        // match.CurrentPlayer är spelaren vars tid gick ut – korrekt
+        _matchService.HandleTurnTimeout(match, playerWhoTimedOut.Id);
+
+        var winner = match.Players.First(p => p.Id != playerWhoTimedOut.Id);
+
+        if (_matchService.IsMatchFinished(match))
+        {
+            await Clients.Group(roomCode).SendAsync("OnMatchResult", new
+            {
+                winnerId = match.Winner!.Id,
+                winnerName = match.Winner!.Name,
+                scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList()
+            });
+        }
+        else
+        {
+            await Clients.Group(roomCode).SendAsync("OnRoundResult", new
+            {
+                winnerId = winner.Id,
+                winnerName = winner.Name,
+                scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList(),
+                reason = "timeout",
+                playerWhoTimedOutId = playerWhoTimedOut.Id
+            });
+        }
     }
 
     // ── HJÄLPMETODER ──
@@ -173,8 +223,9 @@ public class GameHub : Hub
         {
             await Clients.Group(roomCode).SendAsync("OnMatchResult", new
             {
-                winnerIndex = match.Players.IndexOf(match.Winner!),
-                scores = match.Players.Select(p => p.Score).ToList()
+                winnerId = match.Winner!.Id,
+                winnerName = match.Winner!.Name,
+                scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList()
             });
         }
         else
@@ -186,9 +237,10 @@ public class GameHub : Hub
 
             await Clients.Group(roomCode).SendAsync("OnRoundResult", new
             {
-                winnerIndex,
-                scores = match.Players.Select(p => p.Score).ToList(),
-                reason
+                winnerId = winner.Id,                     
+                winnerName = winner.Name,             
+                 scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList(),
+            reason
             });
         }
     }
