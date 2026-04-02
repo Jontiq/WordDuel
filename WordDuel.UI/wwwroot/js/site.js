@@ -6,6 +6,8 @@ const connection = new signalR.HubConnectionBuilder()
 
 let roomCode = null;
 let myPlayerIndex = null; // 0 = spelare 1, 1 = spelare 2
+let myPlayerId = null;
+let myPlayerName = null;
 
 // Starta anslutningen
 connection.start()
@@ -47,6 +49,11 @@ connection.on("OnStartWordSelected", (data) => {
     wordHistory = []; // ← återställ historik vid ny runda
     addWordToHistory(selectedWord, true); // ← lägg till startordet en gång
 
+    //Uppdatera currentWord och originalWord för båda spelarna
+    currentWord = selectedWord.split('');
+    originalWord = [...currentWord];
+    changedIndex = null;
+
     const isNowMyTurn = data.nextPlayerIndex === myPlayerIndex;
     if (isNowMyTurn) {
         showState('player-turn');
@@ -86,16 +93,46 @@ connection.on("OnWordRejected", (reason) => {
 
 // Omgången är slut
 connection.on("OnRoundResult", (data) => {
-    const youWon = data.winnerIndex === myPlayerIndex;
+    const youWon = data.winnerId === myPlayerId;
+
+    const myScore = data.scores.find(s => s.id === myPlayerId);
+    const opponentScore = data.scores.find(s => s.id !== myPlayerId);
+
+    if (myScore && opponentScore) {
+        scores.you = myScore.score;
+        scores.opponent = opponentScore.score;
+    }
+
+    //Bestäm rätt meddelande baserat på reason
+    let displayReason = data.reason;
+    if (data.reason === "gaveUp") {
+        displayReason = data.playerWhoGaveUpId === myPlayerId
+            ? "Du gav upp."
+            : "Motståndaren gav upp.";
+    } else if (data.reason === "timeout") {
+        displayReason = data.playerWhoTimedOutId === myPlayerId
+            ? "Din tid rann ut."
+            : "Motståndarens tid rann ut.";
+    } else {
+        displayReason = data.reason; // Fallback
+    }
     showState('round-result');
-    initRoundResult(youWon, data.reason);
+    initRoundResult(youWon, displayReason);
     document.getElementById('di-roundstate').textContent = 'finished';
 });
 
 // Matchen är slut
 connection.on("OnMatchResult", (data) => {
-    scores.you = data.scores[myPlayerIndex];
-    scores.opponent = data.scores[myPlayerIndex === 0 ? 1 : 0];
+    const youWon = data.winnerId === myPlayerId;
+
+    const myScore = data.scores.find(s => s.id === myPlayerId);
+    const opponentScore = data.scores.find(s => s.id !== myPlayerId);
+
+    if (myScore && opponentScore) {
+        scores.you = myScore.score;
+        scores.opponent = opponentScore.score;
+    }
+
     showState('match-result');
 });
 
@@ -166,7 +203,10 @@ function hostGame() {
     roundsToWin = Math.ceil(setsText / 2);
     currentTimerSeconds = timeChip ? parseInt(timeChip.textContent) : 30;
 
-    connection.invoke("HostGame", roundsToWin, "Player 1")
+    myPlayerName = "Player 1";
+    myPlayerId = 1;       
+
+    connection.invoke("HostGame", roundsToWin, myPlayerName)
         .catch(err => console.error("HostGame error:", err));
 }
 
@@ -186,9 +226,11 @@ function submitJoinCode() {
     if (code.length < 7) return;
 
     myPlayerIndex = 1;
+    myPlayerName = "Player 2";
+    myPlayerId = 2;
     roomCode = code;
 
-    connection.invoke("JoinGame", code, "Player 2")
+    connection.invoke("JoinGame", code, myPlayerName)
         .catch(err => console.error("JoinGame error:", err));
 
     closeJoinModal();
@@ -540,13 +582,11 @@ function initRoundResult(youWon, reason) {
     const countdownText = document.getElementById('rr-countdown-text');
 
     if (youWon) {
-        scores.you++;
         document.getElementById('rr-result-text').textContent = 'Du vann setet!';
         document.getElementById('rr-icon').textContent = '🎯';
         document.getElementById('rr-score-you-card').classList.add('active-player');
         document.getElementById('rr-score-opponent-card').classList.remove('active-player');
     } else {
-        scores.opponent++;
         document.getElementById('rr-result-text').textContent = 'Motståndaren vann setet!';
         document.getElementById('rr-icon').textContent = '😔';
         document.getElementById('rr-score-you-card').classList.remove('active-player');
@@ -588,6 +628,9 @@ function startNextRoundCountdown() {
         countdownText.textContent = `Nästa set startar om ${count} sekunder...`;
         if (count <= 0) {
             clearInterval(nextRoundInterval);
+            //Återställ state innan ny runda
+            wordHistory = [];
+            selectedWord = null;
             showState('coin-flip');
         }
     }, 1000);
