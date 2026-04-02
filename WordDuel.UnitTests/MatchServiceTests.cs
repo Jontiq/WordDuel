@@ -1,6 +1,5 @@
 using WordDuel.BLL.GameLogicServices;
 using WordDuel.BLL.WordServices;
-using WordDuel.DAL.Repositories;
 using WordDuel.Shared.DTOs;
 using WordDuel.Shared.Enums;
 using WordDuel.UnitTests.Fakes;
@@ -13,8 +12,7 @@ public class MatchServiceTests
 
     public MatchServiceTests()
     {
-        var fakeRepo = new FakeWordRepository();// Using fakeRepo to avoid dependency on actual data source,
-                                                // making tests faster and more reliable.
+        var fakeRepo = new FakeWordRepository(); // Using a fake repo makes tests deterministic and independent of the real word source.
         var wordService = new WordService(fakeRepo);
         service = new MatchService(wordService, new Random());
     }
@@ -23,6 +21,26 @@ public class MatchServiceTests
     {
         var match = service.CreateMatch(3, "A");
         service.JoinMatch(match, "B");
+        return match;
+    }
+
+    private MatchDto CreateMatchWithActiveRound(string currentWord = "stark")
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        match.CurrentPlayer = match.Players[0];
+
+        match.Rounds.Add(new RoundDto
+        {
+            RoundNumber = 1,
+            StartingPlayer = match.Players[0],
+            StartingWord = currentWord,
+            CurrentWord = currentWord,
+            State = RoundState.InProgress,
+            UsedWords = new List<string> { currentWord }
+        });
+
+        match.CurrentRoundNumber = 1;
         return match;
     }
 
@@ -120,27 +138,31 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void StartNewRound_ShouldSetCorrectRoundData()
+    public async Task StartNewRoundAsync_ShouldSetCorrectRoundData()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
 
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
+
+        var round = match.Rounds[0];
 
         Assert.Single(match.Rounds);
-        Assert.Equal(1, match.Rounds[0].RoundNumber);
-        Assert.Equal("stark", match.Rounds[0].StartingWord);
-        Assert.Equal("stark", match.Rounds[0].CurrentWord);
-        Assert.Equal(RoundState.InProgress, match.Rounds[0].State);
-        Assert.Equal("stark", match.Rounds[0].UsedWords[0]);
+        Assert.Equal(1, round.RoundNumber);
+        Assert.False(string.IsNullOrWhiteSpace(round.StartingWord));
+        Assert.Equal(5, round.StartingWord.Length);
+        Assert.Equal(round.StartingWord, round.CurrentWord);
+        Assert.Equal(RoundState.InProgress, round.State);
+        Assert.Equal(round.StartingWord, round.UsedWords[0]);
     }
 
     [Fact]
-    public void StartNewRound_ShouldThrowException_WhenCurrentPlayerIsNull()
+    public async Task StartNewRoundAsync_ShouldThrowException_WhenCurrentPlayerIsNull()
     {
         var match = CreateMatchWithTwoPlayers();
 
-        Assert.Throws<InvalidOperationException>(() => service.StartNewRound(match, "stark"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.StartNewRoundAsync(match, 5));
     }
 
     [Fact]
@@ -155,11 +177,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void EndRound_ShouldIncreaseWinnerScoreAndFinishRound()
+    public async Task EndRound_ShouldIncreaseWinnerScoreAndFinishRound()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.EndRound(match, match.Players[0].Id);
 
@@ -169,11 +191,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void EndRound_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
+    public async Task EndRound_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
         match.Players[0].Score = 2;
 
         service.EndRound(match, match.Players[0].Id);
@@ -184,11 +206,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void EndRound_ShouldSetLoserAsNextCurrentPlayer_WhenMatchContinues()
+    public async Task EndRound_ShouldSetLoserAsNextCurrentPlayer_WhenMatchContinues()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.EndRound(match, match.Players[0].Id);
 
@@ -196,11 +218,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void GiveUpRound_ShouldMakeOtherPlayerWinRound()
+    public async Task GiveUpRound_ShouldMakeOtherPlayerWinRound()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -209,11 +231,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void GiveUpRound_ShouldIncreaseWinnersScore()
+    public async Task GiveUpRound_ShouldIncreaseWinnersScore()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -221,12 +243,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void GiveUpRound_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
+    public async Task GiveUpRound_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
-
+        await service.StartNewRoundAsync(match, 5);
         match.Players[1].Score = 2;
 
         service.GiveUpRound(match, match.Players[0].Id);
@@ -236,11 +257,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void GiveUpRound_ShouldSetLoserNextCurrentPlayer_WhenMatchContinues()
+    public async Task GiveUpRound_ShouldSetLoserAsNextCurrentPlayer_WhenMatchContinues()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -248,11 +269,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void HandleTurnTimeout_ShouldMakeOtherPlayerWinRound()
+    public async Task HandleTurnTimeout_ShouldMakeOtherPlayerWinRound()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
@@ -261,11 +282,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void HandleTurnTimeout_ShouldIncreaseWinnersScore()
+    public async Task HandleTurnTimeout_ShouldIncreaseWinnersScore()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
@@ -273,12 +294,11 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void HandleTurnTimeout_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
+    public async Task HandleTurnTimeout_ShouldFinishMatch_WhenWinnerReachesRoundsToWin()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
-
+        await service.StartNewRoundAsync(match, 5);
         match.Players[1].Score = 2;
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
@@ -288,25 +308,21 @@ public class MatchServiceTests
     }
 
     [Fact]
-    public void HandleTurnTimeout_ShouldSetLoserAsNextCurrentPlayer_WhenMatchContinues()
+    public async Task HandleTurnTimeout_ShouldSetLoserAsNextCurrentPlayer_WhenMatchContinues()
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        service.StartNewRound(match, "stark");
+        await service.StartNewRoundAsync(match, 5);
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
         Assert.Equal(match.Players[0].Id, match.CurrentPlayer?.Id);
     }
-
 
     [Fact]
     public async Task SubmitMoveAsync_ShouldUpdateCurrentWord_WhenMoveIsValid()
     {
-        var match = CreateMatchWithTwoPlayers();
-        service.StartMatch(match);
-        match.CurrentPlayer = match.Players[0];
-        service.StartNewRound(match, "stark");
+        var match = CreateMatchWithActiveRound("stark");
 
         await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
 
@@ -316,10 +332,7 @@ public class MatchServiceTests
     [Fact]
     public async Task SubmitMoveAsync_ShouldAddMove_WhenMoveIsValid()
     {
-        var match = CreateMatchWithTwoPlayers();
-        service.StartMatch(match);
-        match.CurrentPlayer = match.Players[0];
-        service.StartNewRound(match, "stark");
+        var match = CreateMatchWithActiveRound("stark");
 
         await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
 
@@ -331,10 +344,7 @@ public class MatchServiceTests
     [Fact]
     public async Task SubmitMoveAsync_ShouldSwitchTurn_WhenMoveIsValid()
     {
-        var match = CreateMatchWithTwoPlayers();
-        service.StartMatch(match);
-        match.CurrentPlayer = match.Players[0];
-        service.StartNewRound(match, "stark");
+        var match = CreateMatchWithActiveRound("stark");
 
         await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
 
@@ -344,10 +354,7 @@ public class MatchServiceTests
     [Fact]
     public async Task SubmitMoveAsync_ShouldThrow_WhenWrongPlayerTriesToPlay()
     {
-        var match = CreateMatchWithTwoPlayers();
-        service.StartMatch(match);
-        match.CurrentPlayer = match.Players[0];
-        service.StartNewRound(match, "stark");
+        var match = CreateMatchWithActiveRound("stark");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SubmitMoveAsync(match, match.Players[1].Id, "start"));
@@ -356,10 +363,7 @@ public class MatchServiceTests
     [Fact]
     public async Task SubmitMoveAsync_ShouldThrow_WhenWordIsInvalid()
     {
-        var match = CreateMatchWithTwoPlayers();
-        service.StartMatch(match);
-        match.CurrentPlayer = match.Players[0];
-        service.StartNewRound(match, "stark");
+        var match = CreateMatchWithActiveRound("stark");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SubmitMoveAsync(match, match.Players[0].Id, "zzzzz"));
@@ -368,10 +372,7 @@ public class MatchServiceTests
     [Fact]
     public async Task SubmitMoveAsync_ShouldThrow_WhenMoreThanOneLetterIsChanged()
     {
-        var match = CreateMatchWithTwoPlayers();
-        service.StartMatch(match);
-        match.CurrentPlayer = match.Players[0];
-        service.StartNewRound(match, "stark");
+        var match = CreateMatchWithActiveRound("stark");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SubmitMoveAsync(match, match.Players[0].Id, "sport"));
@@ -380,18 +381,12 @@ public class MatchServiceTests
     [Fact]
     public async Task SubmitMoveAsync_ShouldThrow_WhenWordHasAlreadyBeenUsed()
     {
-        var match = CreateMatchWithTwoPlayers();
-        service.StartMatch(match);
-        match.CurrentPlayer = match.Players[0];
-        service.StartNewRound(match, "stark");
+        var match = CreateMatchWithActiveRound("stark");
 
         await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
-
         match.CurrentPlayer = match.Players[0];
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SubmitMoveAsync(match, match.Players[0].Id, "start"));
     }
-
-
 }
