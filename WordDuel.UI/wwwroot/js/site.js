@@ -1,5 +1,113 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿// ── SIGNALR SETUP ──
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("https://localhost:7222/gameHub")  // ← byt till API-projektets port
+    .withAutomaticReconnect()
+    .build();
+
+let roomCode = null;
+let myPlayerIndex = null; // 0 = spelare 1, 1 = spelare 2
+
+// Starta anslutningen
+connection.start()
+    .then(() => console.log("SignalR connected"))
+    .catch(err => console.error("SignalR connection error:", err));
+
+// ── SIGNALR EVENTS ──
+
+// Värden har skapat spelet
+connection.on("OnGameHosted", (data) => {
+    roomCode = data.roomCode;
+    myPlayerIndex = 0;
+    document.getElementById('room-code').textContent = data.roomCode;
+    document.getElementById('di-session').textContent = data.roomCode;
+    showState('waiting');
+});
+
+// Motståndaren har anslutit – bara visa waiting, StartMatch sker i hubben
+connection.on("OnPlayerJoined", () => {
+    console.log("Opponent joined!");
+});
+
+// Coin flip-resultat från BLL
+connection.on("OnCoinFlipResult", (starterIndex) => {
+    const iStart = starterIndex === myPlayerIndex ? 0 : 1;
+    setCoinFlipWinner(iStart);
+    showState('coin-flip');
+});
+
+// Startord mottagna från servern
+connection.on("OnStartWordsReceived", (words) => {
+    renderWordCards(words);
+});
+
+// Startord valt – båda spelare uppdateras
+connection.on("OnStartWordSelected", (data) => {
+    selectedWord = data.word.toUpperCase();
+    hideOpponentOverlay();
+    wordHistory = []; // ← återställ historik vid ny runda
+    addWordToHistory(selectedWord, true); // ← lägg till startordet en gång
+
+    const isNowMyTurn = data.nextPlayerIndex === myPlayerIndex;
+    if (isNowMyTurn) {
+        showState('player-turn');
+    } else {
+        showState('spectating');
+    }
+});
+
+// Ord accepterat – uppdatera båda spelares vy
+connection.on("OnWordAccepted", (data) => {
+    clearInterval(timerInterval); // ← stoppa timern här
+    timerActive = false;
+    const word = data.word.toUpperCase();
+    addWordToHistory(word, true);
+    originalWord = word.split('');
+    currentWord = [...originalWord];
+    changedIndex = null;
+    selectedWord = word; // ← lägg till denna
+
+    const isNowMyTurn = data.nextPlayerIndex === myPlayerIndex;
+
+    if (isNowMyTurn) {
+        hideOpponentOverlay();
+        showState('player-turn');
+    } else {
+        showState('spectating');
+    }
+});
+
+// Ord avvisat
+connection.on("OnWordRejected", (reason) => {
+    const feedback = document.getElementById('pt-feedback');
+    feedback.textContent = `⚠ ${reason}`;
+    feedback.style.color = 'var(--red)';
+    undoTileChange();
+});
+
+// Omgången är slut
+connection.on("OnRoundResult", (data) => {
+    const youWon = data.winnerIndex === myPlayerIndex;
+    showState('round-result');
+    initRoundResult(youWon, data.reason);
+    document.getElementById('di-roundstate').textContent = 'finished';
+});
+
+// Matchen är slut
+connection.on("OnMatchResult", (data) => {
+    scores.you = data.scores[myPlayerIndex];
+    scores.opponent = data.scores[myPlayerIndex === 0 ? 1 : 0];
+    showState('match-result');
+});
+
+// Felmeddelande från servern
+connection.on("OnError", (message) => {
+    console.error("Server error:", message);
+    alert(message);
+});
+
+// ── SPELSTATE ──
+let isMyTurn = false;
+let currentTimerSeconds = 30;
 
 // ── DEV PANEL ──
 function togglePanel() {
@@ -16,11 +124,9 @@ function showState(name) {
     coinFlipActive = false;
     timerActive = false;
     spectatingTimerActive = false;
-    
 
     console.log('showState called with: ' + name);
 
-    // Hantera synlighet för sidor och knappar
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.dev-btn').forEach(b => b.classList.remove('active'));
 
@@ -33,20 +139,14 @@ function showState(name) {
 
     document.getElementById('di-gamestate').textContent = name;
 
-    // Specifik initiering per state
     if (name === 'coin-flip') startCoinFlip();
     if (name === 'player-turn') {
-        wordHistory = [];
         initPlayerTurn(selectedWord || 'LUNKA');
     }
     if (name === 'spectating') initSpectating();
-
-    // NYTT: Nu byter vi bara till vyn, men anropar inte initRoundResult härifrån
     if (name === 'round-result') {
-        // initRoundResult anropas separat av spelflödet eller tester
         console.log('Switched to round-result view. Waiting for external data init...');
     }
-
     if (name === 'match-result') initMatchResult();
 }
 
@@ -57,7 +157,20 @@ function selectChip(groupId, el) {
     el.classList.add('selected');
 }
 
-// ── JOIN MODAL ──
+// ── LOBBY – HOST GAME ──
+function hostGame() {
+    const setsChip = document.querySelector('#sets-group .chip.selected');
+    const timeChip = document.querySelector('#time-group .chip.selected');
+
+    const setsText = setsChip ? parseInt(setsChip.textContent) : 3;
+    roundsToWin = Math.ceil(setsText / 2);
+    currentTimerSeconds = timeChip ? parseInt(timeChip.textContent) : 30;
+
+    connection.invoke("HostGame", roundsToWin, "Player 1")
+        .catch(err => console.error("HostGame error:", err));
+}
+
+// ── LOBBY – JOIN GAME ──
 function openJoinModal() {
     document.getElementById('join-modal').classList.add('open');
     document.getElementById('join-code-input').focus();
@@ -69,20 +182,25 @@ function closeJoinModal(event) {
 }
 
 function submitJoinCode() {
-    const code = document.getElementById('join-code-input').value;
+    const code = document.getElementById('join-code-input').value.trim().toUpperCase();
     if (code.length < 7) return;
+
+    myPlayerIndex = 1;
+    roomCode = code;
+
+    connection.invoke("JoinGame", code, "Player 2")
+        .catch(err => console.error("JoinGame error:", err));
+
     closeJoinModal();
-    showState('waiting');
 }
 
 // ── COIN FLIP ──
-
-// Används av tester för att tvinga ett utfall
 let _coinFlipOverride = null;
 
 function setCoinFlipWinner(winner) {
     _coinFlipOverride = winner;
 }
+
 function startCoinFlip() {
     const arrow = document.getElementById('cf-arrow');
     const result = document.getElementById('cf-result');
@@ -90,7 +208,6 @@ function startCoinFlip() {
     const countdown = document.getElementById('cf-countdown');
     const countEl = document.getElementById('cf-count');
 
-    // Återställ UI
     coinFlipActive = true;
     clearInterval(coinFlipInterval);
     result.style.display = 'none';
@@ -98,18 +215,15 @@ function startCoinFlip() {
     document.getElementById('cf-player1').classList.remove('winner');
     document.getElementById('cf-player2').classList.remove('winner');
 
-    // Slumpa vinnare – kommer från BLL via SignalR senare (Kan anropas av tester just nu)
     const winner = _coinFlipOverride !== null ? _coinFlipOverride : Math.random() < 0.5 ? 0 : 1;
 
-
-    // 270° = vänster = spelare 1, 90° = höger = spelare 2
     const finalAngle = winner === 0 ? 270 : 90;
     const totalRotation = (8 * 360) + finalAngle;
     const duration = 3500;
     let startTime = null;
 
     function spin(timestamp) {
-        if (!coinFlipActive) return; // ← avbryt om vi navigerat bort
+        if (!coinFlipActive) return;
         if (!startTime) startTime = timestamp;
         const elapsed = timestamp - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -127,14 +241,12 @@ function startCoinFlip() {
 }
 
 function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
-    // Highlighta vinnaren
     document.getElementById(winner === 0 ? 'cf-player1' : 'cf-player2').classList.add('winner');
 
     resultText.textContent = winner === 0 ? 'Du börjar!' : 'Motståndaren börjar!';
     result.style.display = 'block';
     countdown.style.display = 'block';
 
-    // Countdown 5 → 0
     let count = 5;
     countEl.textContent = count;
 
@@ -148,7 +260,10 @@ function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
         if (count <= 0) {
             clearInterval(coinFlipInterval);
             coinFlipActive = false;
+
             if (winner === 0) {
+                connection.invoke("GetStartWords", roomCode)
+                    .catch(err => console.error("GetStartWords error:", err));
                 showState('word-select');
             } else {
                 showState('spectating');
@@ -161,14 +276,32 @@ function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
 // ── WORD SELECT ──
 let selectedWord = null;
 
+function renderWordCards(words) {
+    const container = document.getElementById('word-cards');
+    if (!container) return;
+    container.innerHTML = '';
+
+    words.forEach((word, i) => {
+        const card = document.createElement('div');
+        card.className = 'word-card';
+        card.onclick = () => selectWord(card, word);
+        card.innerHTML = `
+            <div class="word-card-num">${i + 1}</div>
+            <div class="word-card-letters">${word.toUpperCase()}</div>
+            <button class="btn btn-secondary btn-sm">Välj</button>
+        `;
+        container.appendChild(card);
+    });
+}
+
 function selectWord(cardEl, word) {
     document.querySelectorAll('.word-card').forEach(c => c.classList.remove('selected'));
     cardEl.classList.add('selected');
-    selectedWord = word;
+    selectedWord = word.toUpperCase();
 
-    // Kort fördröjning sen gå vidare till spelarens tur
     setTimeout(() => {
-        showState('player-turn');
+        connection.invoke("SelectStartWord", roomCode, word)
+            .catch(err => console.error("SelectStartWord error:", err));
     }, 600);
 }
 
@@ -191,11 +324,12 @@ function initPlayerTurn(word) {
     currentWord = word.toUpperCase().split('');
     originalWord = [...currentWord];
     changedIndex = null;
+    isMyTurn = true;
 
     renderTiles();
     updateButtons();
-    addWordToHistory(word, true);
-    startTimer(30);
+    startTimer(currentTimerSeconds);
+    document.getElementById('di-player').textContent = 'Du';
 }
 
 function renderTiles() {
@@ -211,7 +345,6 @@ function renderTiles() {
         input.maxLength = 1;
         input.value = letter;
 
-        // Lås alla andra rutor om en redan är ändrad
         if (changedIndex !== null && changedIndex !== index) {
             input.disabled = true;
             tile.style.opacity = '0.4';
@@ -230,11 +363,11 @@ function selectTile(index) {
 }
 
 function handleTileInput(e, index) {
+    document.getElementById('pt-feedback').textContent = '';
     const val = e.target.value.toUpperCase().slice(-1);
     e.target.value = val;
 
     if (val === originalWord[index]) {
-        // Återställd till original
         currentWord[index] = val;
         changedIndex = null;
     } else {
@@ -245,7 +378,6 @@ function handleTileInput(e, index) {
     renderTiles();
     updateButtons();
 
-    // Fokusera rätt input efter re-render
     const inputs = document.querySelectorAll('#pt-tiles .tile input');
     if (inputs[index]) inputs[index].focus();
 }
@@ -265,16 +397,25 @@ function updateButtons() {
 }
 
 function submitWord() {
-    const word = currentWord.join('');
-    addWordToHistory(word, true);
-    showState('spectating');
+    const word = currentWord.join('').toLowerCase();
+    // Ta INTE bort timern här – låt den fortsätta tills servern svarar
+
+    connection.invoke("SubmitWord", roomCode, word)
+        .catch(err => console.error("SubmitWord error:", err));
+}
+
+function giveUp() {
+    clearInterval(timerInterval);
+    timerActive = false;
+
+    connection.invoke("GiveUp", roomCode)
+        .catch(err => console.error("GiveUp error:", err));
 }
 
 // ── ORDHISTORIK ──
 let wordHistory = [];
 
 function addWordToHistory(word, isLatest = false) {
-    // Ta bort latest-markering från tidigare
     wordHistory = wordHistory.map(w => ({ ...w, latest: false }));
     wordHistory.unshift({ word, latest: isLatest });
     renderWordHistory();
@@ -317,7 +458,7 @@ function startTimer(seconds) {
     const circumference = 2 * Math.PI * 35;
 
     function update() {
-        if (!timerActive) return; // ← avbryt om vi navigerat bort
+        if (!timerActive) return;
 
         const ratio = remaining / seconds;
         arc.style.strokeDashoffset = circumference * (1 - ratio);
@@ -328,7 +469,8 @@ function startTimer(seconds) {
         if (remaining <= 0) {
             clearInterval(timerInterval);
             timerActive = false;
-            showState('round-result');
+            connection.invoke("TimerExpired", roomCode)
+                .catch(err => console.error("TimerExpired error:", err));
         }
         remaining--;
     }
@@ -341,7 +483,8 @@ function startTimer(seconds) {
 function initSpectating() {
     renderSpectatingTiles();
     renderSpectatingHistory();
-    startSpectatingTimer(30);
+    isMyTurn = false;
+    document.getElementById('di-player').textContent = 'Motståndare';
 }
 
 function renderSpectatingTiles() {
@@ -388,42 +531,14 @@ function renderSpectatingHistory() {
 let spectatingTimerInterval = null;
 let spectatingTimerActive = false;
 
-function startSpectatingTimer(seconds) {
-    clearInterval(spectatingTimerInterval);
-    spectatingTimerActive = true;
-    let remaining = seconds;
-    const arc = document.getElementById('sp-timer-arc');
-    const label = document.getElementById('sp-timer-label');
-    const circumference = 2 * Math.PI * 35;
-
-    function update() {
-        if (!spectatingTimerActive) return;
-        const ratio = remaining / seconds;
-        arc.style.strokeDashoffset = circumference * (1 - ratio);
-        arc.style.stroke = remaining <= 10 ? '#A32D2D' : '#1D9E75';
-        label.style.color = remaining <= 10 ? '#A32D2D' : 'var(--text)';
-        label.textContent = remaining;
-
-        if (remaining <= 0) {
-            clearInterval(spectatingTimerInterval);
-            spectatingTimerActive = false;
-            // Motståndaren gick ut på tid – vi vinner
-            showState('round-result');
-        }
-        remaining--;
-    }
-
-    update();
-    spectatingTimerInterval = setInterval(update, 1000);
-}
-
 // ── ROUND RESULT ──
 let scores = { you: 0, opponent: 0 };
-let roundsToWin = 2; // bäst av 3 = 2, bäst av 5 = 3 osv – kommer från lobby-valet senare
+let roundsToWin = 2;
 
 function initRoundResult(youWon, reason) {
     const btn = document.getElementById('rr-next-btn');
     const countdownText = document.getElementById('rr-countdown-text');
+
     if (youWon) {
         scores.you++;
         document.getElementById('rr-result-text').textContent = 'Du vann setet!';
@@ -444,9 +559,7 @@ function initRoundResult(youWon, reason) {
 
     renderPips();
 
-    // Kolla om matchen är slut
     const matchOver = scores.you >= roundsToWin || scores.opponent >= roundsToWin;
-    
 
     if (matchOver) {
         btn.textContent = 'Se resultat →';
@@ -502,7 +615,6 @@ function onRoundResultNext() {
     }
 }
 
-
 // ── MATCH RESULT ──
 function initMatchResult() {
     const youWon = scores.you >= roundsToWin;
@@ -539,5 +651,8 @@ function resetGame() {
     changedIndex = null;
     currentWord = [];
     originalWord = [];
+    roomCode = null;
+    myPlayerIndex = null;
+    isMyTurn = false;
     showState('lobby');
 }
