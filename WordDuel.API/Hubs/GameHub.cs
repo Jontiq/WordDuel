@@ -102,7 +102,7 @@ public class GameHub : Hub
         var match = _sessionStore.Get(roomCode);
         if (match == null) return;
 
-        _matchService.StartNewRound(match, word);
+        await _matchService.StartNewRoundAsync(match, word.Length);
 
         // Efter StartNewRound är CurrentPlayer den som börjar – skicka index
         var nextPlayerIndex = match.Players.IndexOf(match.CurrentPlayer!);
