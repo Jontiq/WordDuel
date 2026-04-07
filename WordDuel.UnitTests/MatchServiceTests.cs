@@ -19,7 +19,7 @@ public class MatchServiceTests
 
     private MatchDto CreateMatchWithTwoPlayers()
     {
-        var match = service.CreateMatch(3, "A");
+        var match = service.CreateMatch(3, 30, "A");
         service.JoinMatch(match, "B");
         return match;
     }
@@ -47,7 +47,7 @@ public class MatchServiceTests
     [Fact]
     public void CreateMatch_ShouldReturnMatchWithFirstPlayerAndWaitingForPlayersState()
     {
-        var result = service.CreateMatch(3, "Anna");
+        var result = service.CreateMatch(3, 30, "Anna");
 
         Assert.NotNull(result);
         Assert.Equal(3, result.RoundsToWin);
@@ -60,13 +60,13 @@ public class MatchServiceTests
     [Fact]
     public void CreateMatch_ShouldThrowException_WhenRoundsToWinIsLessThanOrEqualToZero()
     {
-        Assert.Throws<ArgumentException>(() => service.CreateMatch(0, "Anna"));
+        Assert.Throws<ArgumentException>(() => service.CreateMatch(0, 30, "Anna"));
     }
 
     [Fact]
     public void CreateMatch_ShouldAssignDefaultName_WhenNameIsEmpty()
     {
-        var match = service.CreateMatch(3, "");
+        var match = service.CreateMatch(3, 30, "");
 
         Assert.Single(match.Players);
         Assert.Equal("Player 1", match.Players[0].Name);
@@ -75,7 +75,7 @@ public class MatchServiceTests
     [Fact]
     public void JoinMatch_ShouldAddSecondPlayer()
     {
-        var match = service.CreateMatch(3, "A");
+        var match = service.CreateMatch(3, 30, "A");
 
         service.JoinMatch(match, "B");
 
@@ -95,7 +95,7 @@ public class MatchServiceTests
     [Fact]
     public void CanJoinMatch_ShouldReturnTrue_WhenThereIsRoomForOneMorePlayer()
     {
-        var match = service.CreateMatch(3, "A");
+        var match = service.CreateMatch(3, 30, "A");
 
         Assert.True(service.CanJoinMatch(match));
     }
@@ -111,7 +111,7 @@ public class MatchServiceTests
     [Fact]
     public void StartMatch_ShouldThrowException_WhenLessThanTwoPlayers()
     {
-        var match = service.CreateMatch(3, "Anna");
+        var match = service.CreateMatch(3, 30, "Anna");
 
         Assert.Throws<InvalidOperationException>(() => service.StartMatch(match));
     }
@@ -143,7 +143,7 @@ public class MatchServiceTests
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
 
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         var round = match.Rounds[0];
 
@@ -162,7 +162,7 @@ public class MatchServiceTests
         var match = CreateMatchWithTwoPlayers();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.StartNewRoundAsync(match, 5));
+            service.StartNewRoundAsync(match, "spela"));
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.EndRound(match, match.Players[0].Id);
 
@@ -195,7 +195,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
         match.Players[0].Score = 2;
 
         service.EndRound(match, match.Players[0].Id);
@@ -210,7 +210,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.EndRound(match, match.Players[0].Id);
 
@@ -222,7 +222,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -235,7 +235,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -247,7 +247,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
         match.Players[1].Score = 2;
 
         service.GiveUpRound(match, match.Players[0].Id);
@@ -261,7 +261,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -273,7 +273,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
@@ -286,7 +286,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
@@ -298,7 +298,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
         match.Players[1].Score = 2;
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
@@ -312,7 +312,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, 5);
+        await service.StartNewRoundAsync(match, "spela");
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
