@@ -11,6 +11,7 @@ public static class MatchMapper
         return new MatchDto
         {
             Id = model.Id,
+            RoomCode = model.RoomCode,
             State = Enum.TryParse<MatchState>(model.State, out var matchState)
                 ? matchState
                 : MatchState.WaitingForPlayers,
@@ -21,8 +22,8 @@ public static class MatchMapper
             CurrentPlayer = model.CurrentPlayer is null ? null : ToDto(model.CurrentPlayer),
             Winner = model.WinnerPlayer is null ? null : ToDto(model.WinnerPlayer),
 
-            Players = model.Players.Select(ToDto).ToList(),
-            Rounds = model.Rounds.Select(ToDto).ToList()
+            Players = model.Players.OrderBy(p => p.Id).Select(ToDto).ToList(),
+            Rounds = model.Rounds.OrderBy(r => r.RoundNumber).Select(ToDto).ToList()
         };
     }
 
@@ -31,6 +32,7 @@ public static class MatchMapper
         var model = new MatchModel
         {
             Id = dto.Id,
+            RoomCode = dto.RoomCode,
             State = dto.State.ToString(),
             BestOf = (dto.RoundsToWin * 2) - 1,
             TurnTimeSeconds = dto.TurnTimeSeconds,

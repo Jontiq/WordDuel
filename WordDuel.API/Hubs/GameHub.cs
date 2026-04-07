@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Session;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using WordDuel.BLL.GameLogicIntefaces;
-using WordDuel.BLL.GameLogicServices;
 using WordDuel.BLL.WordServices;
 using WordDuel.Shared.DTOs;
 
@@ -11,13 +9,13 @@ public class GameHub : Hub
 {
     private readonly IMatchService _matchService;
     private readonly IWordService _wordService;
-    private readonly SessionStore _sessionStore;
+    private readonly IMatchPersistence _persistence;
 
-    public GameHub(IMatchService matchService, IWordService wordService, SessionStore sessionStore)
+    public GameHub(IMatchService matchService, IWordService wordService, IMatchPersistence persistence)
     {
         _matchService = matchService;
         _wordService = wordService;
-        _sessionStore = sessionStore;
+        _persistence = persistence;
     }
 
     // ── HOST GAME ──
@@ -28,21 +26,23 @@ public class GameHub : Hub
         var roomCode = GenerateRoomCode();
         match.RoomCode = roomCode;
 
-        _sessionStore.Add(roomCode, match);
+        match = await _persistence.SaveMatchAsync(match); //Spara till DB
 
         await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
 
         await Clients.Caller.SendAsync("OnGameHosted", new
         {
             roomCode,
-            matchId = match.Id
+            matchId = match.Id,
+            playerId = match.Players[0].Id, //Skicka DB-genererat ID
+            playerIndex = 0
         });
     }
 
     // ── JOIN GAME ──
     public async Task JoinGame(string roomCode, string playerName)
     {
-        var match = _sessionStore.Get(roomCode);
+        var match = await _persistence.LoadMatchAsync(roomCode); //Ladda från DB
         if (match == null)
         {
             await Clients.Caller.SendAsync("OnError", "Rummet hittades inte.");
@@ -56,35 +56,42 @@ public class GameHub : Hub
         }
 
         _matchService.JoinMatch(match, playerName);
+        _matchService.StartMatch(match);
+
+        match = await _persistence.SaveMatchAsync(match); //Spara ändringarna
+
         await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
 
         // Skicka spelinställningar till den som joinar
         await Clients.Caller.SendAsync("OnGameSettings", new
         {
             roundsToWin = match.RoundsToWin,
-            secondsPerRound = match.TurnTimeSeconds
+            secondsPerRound = match.TurnTimeSeconds,
+            playerId = match.Players[1].Id, //Skicka DB-genererat ID
+            playerIndex = 1
+
         });
 
         // Notifiera båda spelare att någon anslutit
         await Clients.Group(roomCode).SendAsync("OnPlayerJoined");
 
-        // Starta matchen direkt här istället – bara en gång
-        _matchService.StartMatch(match);
-        var starterIndex = match.Players.IndexOf(match.CurrentPlayer!);
+        var starterIndex = match.Players.FindIndex(p => p.Id == match.CurrentPlayer!.Id);
         await Clients.Group(roomCode).SendAsync("OnCoinFlipResult", starterIndex);
     }
 
     // ── START MATCH (coin flip) ──
     public async Task StartMatch(string roomCode)
     {
-        var match = _sessionStore.Get(roomCode);
+        var match = await _persistence.LoadMatchAsync(roomCode);
         if (match == null) return;
 
         if (!_matchService.IsMatchReadyToStart(match)) return;
 
         _matchService.StartMatch(match);
 
-        var starterIndex = match.Players.IndexOf(match.CurrentPlayer!);
+        match = await _persistence.SaveMatchAsync(match);
+
+        var starterIndex = match.Players.FindIndex(p => p.Id == match.CurrentPlayer!.Id);
 
         await Clients.Group(roomCode).SendAsync("OnCoinFlipResult", starterIndex);
     }
@@ -108,13 +115,14 @@ public class GameHub : Hub
     // ── SELECT START WORD ──
     public async Task SelectStartWord(string roomCode, string word)
     {
-        var match = _sessionStore.Get(roomCode);
+        var match = await _persistence.LoadMatchAsync(roomCode);
         if (match == null) return;
 
         await _matchService.StartNewRoundAsync(match, word);
+        match = await _persistence.SaveMatchAsync(match); //Spara ny runda
 
         // Efter StartNewRound är CurrentPlayer den som börjar – skicka index
-        var nextPlayerIndex = match.Players.IndexOf(match.CurrentPlayer!);
+        var nextPlayerIndex = match.Players.FindIndex(p => p.Id == match.CurrentPlayer!.Id);
 
         await Clients.Group(roomCode).SendAsync("OnStartWordSelected", new
         {
@@ -127,16 +135,18 @@ public class GameHub : Hub
     // OBS: SubmitMoveAsync anropar SwitchTurn internt – vi gör det inte igen här
     public async Task SubmitWord(string roomCode, string newWord)
     {
-        var match = _sessionStore.Get(roomCode);
+        var match = await _persistence.LoadMatchAsync(roomCode);
         if (match == null) return;
 
         try
         {
             await _matchService.SubmitMoveAsync(match, match.CurrentPlayer!.Id, newWord);
 
+            match = await _persistence.SaveMatchAsync(match); //Spara draget
+
             // SubmitMoveAsync anropar SwitchTurn internt
             // match.CurrentPlayer är nu nästa spelare
-            var nextPlayerIndex = match.Players.IndexOf(match.CurrentPlayer!);
+            var nextPlayerIndex = match.Players.FindIndex(p => p.Id == match.CurrentPlayer!.Id);
 
             await Clients.Group(roomCode).SendAsync("OnWordAccepted", new
             {
@@ -153,8 +163,13 @@ public class GameHub : Hub
     // ── GIVE UP ──
     public async Task GiveUp(string roomCode)
     {
-        var match = _sessionStore.Get(roomCode);
+        var match = await _persistence.LoadMatchAsync(roomCode);
         if (match == null) return;
+
+        // Skydda mot dubbla anrop (runda redan avslutad)
+        var currentRound = match.Rounds.LastOrDefault();
+        if (currentRound == null || currentRound.State != Shared.Enums.RoundState.InProgress)
+            return;
 
         var playerWhoGaveUp = match.CurrentPlayer!; //Spara innan GiveUpRound ändrar CurrentPlayer
 
@@ -166,6 +181,7 @@ public class GameHub : Hub
 
         if (_matchService.IsMatchFinished(match))
         {
+            await _persistence.DeleteMatchAsync(roomCode); //Radera avslutad match
             // Match över - skicka till alla
             await Clients.Group(roomCode).SendAsync("OnMatchResult", new
             {
@@ -176,6 +192,8 @@ public class GameHub : Hub
         }
         else
         {
+            match = await _persistence.SaveMatchAsync(match); //Spara rund-resultat
+
             //Skicka OnRoundResult med playerWhoGaveUpId
             await Clients.Group(roomCode).SendAsync("OnRoundResult", new
             {
@@ -191,8 +209,13 @@ public class GameHub : Hub
     // ── TIMER EXPIRED ──
     public async Task TimerExpired(string roomCode)
     {
-        var match = _sessionStore.Get(roomCode);
+        var match = await _persistence.LoadMatchAsync(roomCode);
         if (match == null) return;
+
+        // Skydda mot dubbla anrop (runda redan avslutad)
+        var currentRound = match.Rounds.LastOrDefault();
+        if (currentRound == null || currentRound.State != Shared.Enums.RoundState.InProgress)
+            return;
 
         var playerWhoTimedOut = match.CurrentPlayer!;//Spara innan CurrentPlayer ändras
 
@@ -203,6 +226,8 @@ public class GameHub : Hub
 
         if (_matchService.IsMatchFinished(match))
         {
+            await _persistence.DeleteMatchAsync(roomCode); //Radera avslutad match
+
             await Clients.Group(roomCode).SendAsync("OnMatchResult", new
             {
                 winnerId = match.Winner!.Id,
@@ -212,6 +237,8 @@ public class GameHub : Hub
         }
         else
         {
+            match = await _persistence.SaveMatchAsync(match); //Spara rund-resultat
+
             await Clients.Group(roomCode).SendAsync("OnRoundResult", new
             {
                 winnerId = winner.Id,

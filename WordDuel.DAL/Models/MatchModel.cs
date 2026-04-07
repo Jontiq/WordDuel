@@ -8,6 +8,7 @@ namespace WordDuel.DAL.Models
     {
         public int Id { get; set; }
 
+        public string RoomCode { get; set; } = string.Empty; // I vilket spelet sker
         public string State { get; set; } = string.Empty; // status
         public int BestOf { get; set; } // Bäst av 3 tex
 

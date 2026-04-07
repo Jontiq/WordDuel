@@ -16,8 +16,6 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<SessionStore>();
-
 // SignalR
 builder.Services.AddSignalR();
 
@@ -44,7 +42,8 @@ builder.Services.AddSingleton<IWordRepository, WordRepository>();
 // BLL
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IWordService, WordService>();
-builder.Services.AddSingleton<SessionStore>();
+builder.Services.AddScoped<IMatchPersistence, MatchPersistence>();
+//builder.Services.AddSingleton<SessionStore>();
 builder.Services.AddTransient<Random>();
 
 var app = builder.Build();
