@@ -31,6 +31,9 @@ public class GameController : ControllerBase
     [HttpPost("host")]
     public IActionResult HostGame([FromBody] HostGameRequest request)
     {
+        try
+        {
+
         var match = _matchService.CreateMatch(request.RoundsToWin, request.SecondsPerRound, request.PlayerName);
 
         var roomCode = GenerateRoomCode();
