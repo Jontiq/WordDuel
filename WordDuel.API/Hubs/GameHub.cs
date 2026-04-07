@@ -21,9 +21,9 @@ public class GameHub : Hub
     }
 
     // ── HOST GAME ──
-    public async Task HostGame(int roundsToWin, string playerName)
+    public async Task HostGame(int roundsToWin, int secondsPerRound, string playerName)
     {
-        var match = _matchService.CreateMatch(roundsToWin, playerName);
+        var match = _matchService.CreateMatch(roundsToWin, secondsPerRound, playerName);
 
         var roomCode = GenerateRoomCode();
         match.RoomCode = roomCode;
@@ -57,6 +57,13 @@ public class GameHub : Hub
 
         _matchService.JoinMatch(match, playerName);
         await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
+
+        // Skicka spelinställningar till den som joinar
+        await Clients.Caller.SendAsync("OnGameSettings", new
+        {
+            roundsToWin = match.RoundsToWin,
+            secondsPerRound = match.TurnTimeSeconds
+        });
 
         // Notifiera båda spelare att någon anslutit
         await Clients.Group(roomCode).SendAsync("OnPlayerJoined");

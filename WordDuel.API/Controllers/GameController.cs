@@ -31,12 +31,12 @@ public class GameController : ControllerBase
     [HttpPost("host")]
     public IActionResult HostGame([FromBody] HostGameRequest request)
     {
-        try
-        {
-            var match = _matchService.CreateMatch(request.RoundsToWin, request.PlayerName);
-            var roomCode = GenerateRoomCode();
-            match.RoomCode = roomCode;
-            _sessionStore.Add(roomCode, match);
+        var match = _matchService.CreateMatch(request.RoundsToWin, request.SecondsPerRound, request.PlayerName);
+
+        var roomCode = GenerateRoomCode();
+        match.RoomCode = roomCode;
+
+        _sessionStore.Add(roomCode, match);
 
             return Ok(new { roomCode, matchId = match.Id });
         }
@@ -325,7 +325,7 @@ public class GameController : ControllerBase
 }
 
 // ── REQUEST MODELS ──
-public record HostGameRequest(int RoundsToWin, string PlayerName);
+public record HostGameRequest(int RoundsToWin, int SecondsPerRound, string PlayerName);
 public record JoinGameRequest(string PlayerName);
 public record SelectWordRequest(string Word);
 public record SubmitWordRequest(int PlayerId, string Word);
