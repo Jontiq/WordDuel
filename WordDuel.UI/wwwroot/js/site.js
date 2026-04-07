@@ -8,6 +8,7 @@ let roomCode = null;
 let myPlayerIndex = null; // 0 = spelare 1, 1 = spelare 2
 let myPlayerId = null;
 let myPlayerName = null;
+let nextRoundStarterId = null;
 
 // Starta anslutningen
 connection.start()
@@ -69,6 +70,27 @@ connection.on("OnStartWordSelected", (data) => {
     }
 });
 
+// Servern avgör vem som börjar nästa set.
+connection.on("OnNextRoundStarter", (data) => {
+    wordHistory = [];
+    selectedWord = null;
+    currentWord = [];
+    originalWord = [];
+    changedIndex = null;
+
+    const iStart = data.starterIndex === myPlayerIndex ? 0 : 1;
+    setCoinFlipWinner(iStart);
+
+    if (data.starterIndex === myPlayerIndex) {
+        connection.invoke("GetStartWords", roomCode)
+            .catch(err => console.error("GetStartWords error:", err));
+        showState('word-select');
+    } else {
+        showState('spectating', false);
+        showOpponentOverlay('Motståndaren väljer ett startord...');
+    }
+});
+
 // Ord accepterat – uppdatera båda spelares vy
 connection.on("OnWordAccepted", (data) => {
     clearInterval(timerInterval); // ← stoppa timern här
@@ -101,6 +123,7 @@ connection.on("OnWordRejected", (reason) => {
 // Omgången är slut
 connection.on("OnRoundResult", (data) => {
     const youWon = data.winnerId === myPlayerId;
+    nextRoundStarterId = data.nextStarterId ?? null;
 
     const myScore = data.scores.find(s => s.id === myPlayerId);
     const opponentScore = data.scores.find(s => s.id !== myPlayerId);
@@ -650,10 +673,10 @@ function startNextRoundCountdown() {
         countdownText.textContent = `Nästa set startar om ${count} sekunder...`;
         if (count <= 0) {
             clearInterval(nextRoundInterval);
-            //Återställ state innan ny runda
-            wordHistory = [];
-            selectedWord = null;
-            showState('coin-flip');
+            if (nextRoundStarterId === myPlayerId) {
+                connection.invoke("BeginNextRound", roomCode)
+                    .catch(err => console.error("BeginNextRound error:", err));
+            }
         }
     }, 1000);
 }
@@ -676,7 +699,10 @@ function onRoundResultNext() {
     if (matchOver) {
         showState('match-result');
     } else {
-        showState('coin-flip');
+        if (nextRoundStarterId === myPlayerId) {
+            connection.invoke("BeginNextRound", roomCode)
+                .catch(err => console.error("BeginNextRound error:", err));
+        }
     }
 }
 
@@ -718,6 +744,7 @@ function resetGame() {
     originalWord = [];
     roomCode = null;
     myPlayerIndex = null;
+    nextRoundStarterId = null;
     isMyTurn = false;
     showState('lobby');
 }

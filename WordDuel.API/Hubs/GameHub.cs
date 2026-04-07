@@ -123,6 +123,23 @@ public class GameHub : Hub
         });
     }
 
+    // ── BEGIN NEXT ROUND ──
+    public async Task BeginNextRound(string roomCode)
+    {
+        var match = _sessionStore.Get(roomCode);
+        if (match == null) return;
+        if (_matchService.IsMatchFinished(match)) return;
+        if (match.CurrentPlayer == null) return;
+
+        var starterIndex = match.Players.IndexOf(match.CurrentPlayer);
+        if (starterIndex < 0) return;
+
+        await Clients.Group(roomCode).SendAsync("OnNextRoundStarter", new
+        {
+            starterIndex
+        });
+    }
+
     // ── SUBMIT WORD ──
     // OBS: SubmitMoveAsync anropar SwitchTurn internt – vi gör det inte igen här
     public async Task SubmitWord(string roomCode, string newWord)
@@ -183,7 +200,8 @@ public class GameHub : Hub
                 winnerName = winner.Name,
                 scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList(),
                 reason = "gaveUp",                        //Flagga för att identifiera give-up
-                playerWhoGaveUpId = playerWhoGaveUp.Id    //Vem som gav upp
+                playerWhoGaveUpId = playerWhoGaveUp.Id,   //Vem som gav upp
+                nextStarterId = match.CurrentPlayer!.Id
             });
         }
     }
@@ -218,7 +236,8 @@ public class GameHub : Hub
                 winnerName = winner.Name,
                 scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList(),
                 reason = "timeout",
-                playerWhoTimedOutId = playerWhoTimedOut.Id
+                playerWhoTimedOutId = playerWhoTimedOut.Id,
+                nextStarterId = match.CurrentPlayer!.Id
             });
         }
     }
@@ -246,8 +265,9 @@ public class GameHub : Hub
             {
                 winnerId = winner.Id,                     
                 winnerName = winner.Name,             
-                 scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList(),
-            reason
+                scores = match.Players.Select(p => new { p.Id, p.Name, p.Score }).ToList(),
+                reason,
+                nextStarterId = match.CurrentPlayer!.Id
             });
         }
     }
