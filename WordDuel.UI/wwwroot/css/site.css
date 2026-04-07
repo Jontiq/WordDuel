@@ -557,6 +557,9 @@ body {
     .pip.won {
         background: var(--teal);
     }
+    .pip.lost {
+        background: var(--red);
+    }
 
 /* ── LAYOUT HELPERS ── */
 .row {

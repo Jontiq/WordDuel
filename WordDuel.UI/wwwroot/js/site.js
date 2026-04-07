@@ -132,10 +132,28 @@ connection.on("OnWordAccepted", (data) => {
 
 // Ord avvisat
 connection.on("OnWordRejected", (reason) => {
+    console.log("OnWordRejected received:", reason);
+
+    currentWord = [...originalWord];
+    changedIndex = null;
+    renderTiles();
+    updateButtons();
+
+    const messages = {
+        "Word is not valid.": "Ordet finns inte i ordlistan.",
+        "Exactly one letter must be changed.": "Du får bara ändra en bokstav.",
+        "Word has already been used in this round.": "Ordet har redan använts denna omgång.",
+        "It is not this player's turn.": "Det är inte din tur.",
+        "Word must have the same length as the current word.": "Ordet måste ha samma längd som det nuvarande ordet.",
+        "No active round.": "Ingen aktiv runda.",
+        "Round is not active.": "Rundan är inte aktiv.",
+        "Match is not in progress.": "Matchen är inte igång."
+    };
+
     const feedback = document.getElementById('pt-feedback');
-    feedback.textContent = `⚠ ${reason}`;
+    feedback.textContent = `⚠ ${messages[reason] || reason}`;
     feedback.style.color = 'var(--red)';
-    undoTileChange();
+    feedback.style.fontWeight = '500';
 });
 
 // Omgången är slut
@@ -378,7 +396,6 @@ function renderWordCards(words) {
         card.innerHTML = `
             <div class="word-card-num">${i + 1}</div>
             <div class="word-card-letters">${word.toUpperCase()}</div>
-            <button class="btn btn-secondary btn-sm">Välj</button>
         `;
         container.appendChild(card);
     });
@@ -415,6 +432,11 @@ function initPlayerTurn(word) {
     originalWord = [...currentWord];
     changedIndex = null;
     isMyTurn = true;
+
+    const feedback = document.getElementById('pt-feedback');
+    feedback.textContent = ''; // ← lägg till denna
+    feedback.style.color = '';
+    feedback.style.fontWeight = '';
 
     renderTiles();
     updateButtons();
@@ -477,7 +499,6 @@ function undoTileChange() {
     changedIndex = null;
     renderTiles();
     updateButtons();
-    document.getElementById('pt-feedback').textContent = '';
 }
 
 function updateButtons() {
@@ -712,11 +733,25 @@ function renderPips() {
     container.innerHTML = '';
     label.textContent = `Poäng (bäst av ${roundsToWin * 2 - 1})`;
 
-    for (let i = 0; i < roundsToWin * 2 - 1; i++) {
-        const pip = document.createElement('div');
-        pip.className = 'pip' + (i < scores.you ? ' won' : '');
-        container.appendChild(pip);
+    const total = roundsToWin * 2 - 1;
+    const pips = [];
+
+    // Bygg en array: grön från vänster, röd från höger, grå i mitten
+    for (let i = 0; i < total; i++) {
+        if (i < scores.you) {
+            pips[i] = 'won';
+        } else if (i >= total - scores.opponent) {
+            pips[i] = 'lost';
+        } else {
+            pips[i] = '';
+        }
     }
+
+    pips.forEach(state => {
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (state ? ` ${state}` : '');
+        container.appendChild(pip);
+    });
 }
 
 function onRoundResultNext() {
@@ -753,11 +788,24 @@ function renderMatchPips() {
     const container = document.getElementById('mr-pips');
     container.innerHTML = '';
 
-    for (let i = 0; i < roundsToWin * 2 - 1; i++) {
-        const pip = document.createElement('div');
-        pip.className = 'pip' + (i < scores.you ? ' won' : '');
-        container.appendChild(pip);
+    const total = roundsToWin * 2 - 1;
+    const pips = [];
+
+    for (let i = 0; i < total; i++) {
+        if (i < scores.you) {
+            pips[i] = 'won';
+        } else if (i >= total - scores.opponent) {
+            pips[i] = 'lost';
+        } else {
+            pips[i] = '';
+        }
     }
+
+    pips.forEach(state => {
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (state ? ` ${state}` : '');
+        container.appendChild(pip);
+    });
 }
 
 function resetGame() {
@@ -771,3 +819,19 @@ function resetGame() {
     updateRoomCodeUi('WD-4829');
     showState('lobby');
 }
+
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const submitBtn = document.getElementById('pt-submit-btn');
+        if (submitBtn && !submitBtn.disabled) {
+            submitWord();
+        }
+    }
+    if (e.key === 'Escape') {
+        const undoBtn = document.getElementById('pt-undo-btn');
+        if (undoBtn && !undoBtn.disabled) {
+            undoTileChange();
+        }
+    }
+});
