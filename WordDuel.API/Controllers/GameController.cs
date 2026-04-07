@@ -227,11 +227,17 @@ public class GameController : ControllerBase
             _logger.LogWarning(ex, "Ogiltigt argument vid submit: {Message}", ex.Message);
             return BadRequest(ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt spelläge vid submit: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Oväntat fel vid submit av ord: {RoomCode}", roomCode);
             return StatusCode(500, "Ett oväntat fel inträffade.");
         }
+        
     }
 
     // POST /api/game/{roomCode}/giveup
