@@ -13,18 +13,27 @@ public class GameController : ControllerBase
     private readonly IMatchService _matchService;
     private readonly IWordService _wordService;
     private readonly SessionStore _sessionStore;
+    private readonly ILogger<GameController> _logger;
 
-    public GameController(IMatchService matchService, IWordService wordService, SessionStore sessionStore)
+    public GameController(
+        IMatchService matchService, 
+        IWordService wordService, 
+        SessionStore sessionStore,
+        ILogger<GameController> logger)
     {
         _matchService = matchService;
         _wordService = wordService;
         _sessionStore = sessionStore;
+        _logger = logger;
     }
 
     // POST /api/game/host
     [HttpPost("host")]
     public IActionResult HostGame([FromBody] HostGameRequest request)
     {
+        try
+        {
+
         var match = _matchService.CreateMatch(request.RoundsToWin, request.SecondsPerRound, request.PlayerName);
 
         var roomCode = GenerateRoomCode();
@@ -32,113 +41,178 @@ public class GameController : ControllerBase
 
         _sessionStore.Add(roomCode, match);
 
-        return Ok(new { roomCode, matchId = match.Id });
+            return Ok(new { roomCode, matchId = match.Id });
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt argument vid host: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid host av spel");
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // POST /api/game/join/{roomCode}
     [HttpPost("join/{roomCode}")]
     public IActionResult JoinGame(string roomCode, [FromBody] JoinGameRequest request)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
+        try
+        {
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
 
-        if (!_matchService.CanJoinMatch(match))
-            return BadRequest("Rummet är fullt.");
+            if (!_matchService.CanJoinMatch(match))
+                return BadRequest("Rummet är fullt.");
 
-        _matchService.JoinMatch(match, request.PlayerName);
+            _matchService.JoinMatch(match, request.PlayerName);
 
-        return Ok(new { roomCode, matchId = match.Id });
+            return Ok(new { roomCode, matchId = match.Id });
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt argument vid join: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid join till rum: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // GET /api/game/{roomCode}
     [HttpGet("{roomCode}")]
     public IActionResult GetMatch(string roomCode)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
-
-        return Ok(new
+        try
         {
-            roomCode = match.RoomCode,
-            state = match.State.ToString(),
-            roundsToWin = match.RoundsToWin,
-            currentRound = match.CurrentRoundNumber,
-            currentPlayer = match.CurrentPlayer?.Name,
-            players = match.Players.Select(p => new { p.Name, p.Score }),
-            currentWord = match.Rounds.LastOrDefault()?.CurrentWord
-        });
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
+
+            return Ok(new
+            {
+                roomCode = match.RoomCode,
+                state = match.State.ToString(),
+                roundsToWin = match.RoundsToWin,
+                currentRound = match.CurrentRoundNumber,
+                currentPlayer = match.CurrentPlayer?.Name,
+                players = match.Players.Select(p => new { p.Name, p.Score }),
+                currentWord = match.Rounds.LastOrDefault()?.CurrentWord
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid hämtning av match: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // POST /api/game/{roomCode}/startmatch
     [HttpPost("{roomCode}/startmatch")]
     public IActionResult StartMatch(string roomCode)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
-
-        if (!_matchService.IsMatchReadyToStart(match))
-            return BadRequest("Matchen är inte redo att starta.");
-
-        _matchService.StartMatch(match);
-
-        var starterIndex = match.Players.IndexOf(match.CurrentPlayer!);
-
-        return Ok(new
+        try
         {
-            starterIndex,
-            starterName = match.CurrentPlayer!.Name
-        });
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
+
+            if (!_matchService.IsMatchReadyToStart(match))
+                return BadRequest("Matchen är inte redo att starta.");
+
+            _matchService.StartMatch(match);
+            var starterIndex = match.Players.IndexOf(match.CurrentPlayer!);
+
+            return Ok(new
+            {
+                starterIndex,
+                starterName = match.CurrentPlayer!.Name
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt argument vid start: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid start av match: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // GET /api/game/{roomCode}/startwords
     [HttpGet("{roomCode}/startwords")]
     public async Task<IActionResult> GetStartWords(string roomCode)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
-
-        var words = new List<string>();
-        while (words.Count < 3)
+        try
         {
-            var word = await _wordService.GetRandomWordAsync(5);
-            if (word != null && !words.Contains(word))
-                words.Add(word);
-        }
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
 
-        return Ok(new { words });
+            var words = new List<string>();
+            while (words.Count < 3)
+            {
+                var word = await _wordService.GetRandomWordAsync(5);
+                if (word != null && !words.Contains(word))
+                    words.Add(word);
+            }
+
+            return Ok(new { words });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid hämtning av startord: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // POST /api/game/{roomCode}/selectword
     [HttpPost("{roomCode}/selectword")]
-    public async Task <IActionResult> SelectWord(string roomCode, [FromBody] SelectWordRequest request)
+    public async Task<IActionResult> SelectWord(string roomCode, [FromBody] SelectWordRequest request)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
-
-        await _matchService.StartNewRoundAsync(match, request.Word);
-
-        return Ok(new
+        try
         {
-            word = request.Word,
-            currentPlayer = match.CurrentPlayer?.Name
-        });
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
+
+            await _matchService.StartNewRoundAsync(match, request.Word);
+
+            return Ok(new
+            {
+                word = request.Word,
+                currentPlayer = match.CurrentPlayer?.Name
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt argument vid val av ord: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid val av ord: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // POST /api/game/{roomCode}/submitword
     [HttpPost("{roomCode}/submitword")]
     public async Task<IActionResult> SubmitWord(string roomCode, [FromBody] SubmitWordRequest request)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
-
         try
         {
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
+
             await _matchService.SubmitMoveAsync(match, request.PlayerId, request.Word);
 
             return Ok(new
@@ -148,9 +222,15 @@ public class GameController : ControllerBase
                 matchFinished = _matchService.IsMatchFinished(match)
             });
         }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt argument vid submit: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            _logger.LogError(ex, "Oväntat fel vid submit av ord: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
         }
     }
 
@@ -158,26 +238,62 @@ public class GameController : ControllerBase
     [HttpPost("{roomCode}/giveup")]
     public IActionResult GiveUp(string roomCode, [FromBody] PlayerActionRequest request)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
+        try
+        {
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
 
-        _matchService.GiveUpRound(match, request.PlayerId);
+            _matchService.GiveUpRound(match, request.PlayerId);
 
-        return Ok(BuildRoundOrMatchResult(match, "Spelaren gav upp."));
+            return Ok(BuildRoundOrMatchResult(match, "Spelaren gav upp."));
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt argument vid give up: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt spelläge vid give up: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid give up: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // POST /api/game/{roomCode}/timerexpired
     [HttpPost("{roomCode}/timerexpired")]
     public IActionResult TimerExpired(string roomCode, [FromBody] PlayerActionRequest request)
     {
-        var match = _sessionStore.Get(roomCode);
-        if (match == null)
-            return NotFound("Rummet hittades inte.");
+        try
+        {
+            var match = _sessionStore.Get(roomCode);
+            if (match == null)
+                return NotFound("Rummet hittades inte.");
 
-        _matchService.HandleTurnTimeout(match, request.PlayerId);
+            _matchService.HandleTurnTimeout(match, request.PlayerId);
 
-        return Ok(BuildRoundOrMatchResult(match, "Tiden rann ut."));
+            return Ok(BuildRoundOrMatchResult(match, "Tiden rann ut."));
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt argument vid timeout: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Ogiltigt spelläge vid timeout: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Oväntat fel vid timeout: {RoomCode}", roomCode);
+            return StatusCode(500, "Ett oväntat fel inträffade.");
+        }
     }
 
     // ── HJÄLPMETODER ──
