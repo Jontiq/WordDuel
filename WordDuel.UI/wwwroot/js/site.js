@@ -540,7 +540,7 @@ let timerActive = false;
 let coinFlipInterval = null;
 let coinFlipActive = false;
 
-function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label') {
+function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label', shouldNotifyServer = true) {
     clearInterval(timerInterval);
     timerActive = true;
     let remaining = seconds;
@@ -560,8 +560,10 @@ function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label') {
         if (remaining <= 0) {
             clearInterval(timerInterval);
             timerActive = false;
-            connection.invoke("TimerExpired", roomCode)
-                .catch(err => console.error("TimerExpired error:", err));
+            if (shouldNotifyServer) {
+                connection.invoke("TimerExpired", roomCode)
+                    .catch(err => console.error("TimerExpired error:", err));
+            }
         }
         remaining--;
     }
@@ -587,7 +589,7 @@ function initSpectating(shouldStartTimer = true) {
 
 
     if (shouldStartTimer) {
-        startTimer(currentTimerSeconds, 'sp-timer-arc', 'sp-timer-label');
+        startTimer(currentTimerSeconds, 'sp-timer-arc', 'sp-timer-label', false);
     }
 
     document.getElementById('di-player').textContent = 'Motståndare';
