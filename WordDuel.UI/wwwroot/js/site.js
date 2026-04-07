@@ -104,8 +104,7 @@ connection.on("OnNextRoundStarter", (data) => {
             .catch(err => console.error("GetStartWords error:", err));
         showState('word-select');
     } else {
-        showState('spectating', false);
-        showOpponentOverlay('Motståndaren väljer ett startord...');
+        showState('spectating', false, true);
     }
 });
 
@@ -132,10 +131,28 @@ connection.on("OnWordAccepted", (data) => {
 
 // Ord avvisat
 connection.on("OnWordRejected", (reason) => {
+    console.log("OnWordRejected received:", reason);
+
+    currentWord = [...originalWord];
+    changedIndex = null;
+    renderTiles();
+    updateButtons();
+
+    const messages = {
+        "Word is not valid.": "Ordet finns inte i ordlistan.",
+        "Exactly one letter must be changed.": "Du får bara ändra en bokstav.",
+        "Word has already been used in this round.": "Ordet har redan använts denna omgång.",
+        "It is not this player's turn.": "Det är inte din tur.",
+        "Word must have the same length as the current word.": "Ordet måste ha samma längd som det nuvarande ordet.",
+        "No active round.": "Ingen aktiv runda.",
+        "Round is not active.": "Rundan är inte aktiv.",
+        "Match is not in progress.": "Matchen är inte igång."
+    };
+
     const feedback = document.getElementById('pt-feedback');
-    feedback.textContent = `⚠ ${reason}`;
+    feedback.textContent = `⚠ ${messages[reason] || reason}`;
     feedback.style.color = 'var(--red)';
-    undoTileChange();
+    feedback.style.fontWeight = '500';
 });
 
 // Omgången är slut
@@ -200,15 +217,17 @@ function togglePanel() {
 }
 
 // ── STATE SWITCHER ──
-function showState(name, withTimer = true) {
+function showState(name, withTimer = true, withOverlay = false) {
     clearInterval(nextRoundInterval);
     clearInterval(timerInterval);
     clearInterval(coinFlipInterval);
     clearInterval(spectatingTimerInterval);
-    hideOpponentOverlay();
     coinFlipActive = false;
     timerActive = false;
     spectatingTimerActive = false;
+
+    // Dölj overlay bara om vi INTE ska visa den
+    if (!withOverlay) hideOpponentOverlay();
 
     console.log('showState called with: ' + name);
 
@@ -225,13 +244,9 @@ function showState(name, withTimer = true) {
     document.getElementById('di-gamestate').textContent = name;
 
     if (name === 'coin-flip') startCoinFlip();
-    if (name === 'player-turn') {
-        initPlayerTurn(selectedWord || 'LUNKA');
-    }
-    if (name === 'spectating') initSpectating(withTimer);
-    if (name === 'round-result') {
-        console.log('Switched to round-result view. Waiting for external data init...');
-    }
+    if (name === 'player-turn') initPlayerTurn(selectedWord || 'LUNKA');
+    if (name === 'spectating') initSpectating(withTimer, withOverlay);
+    if (name === 'round-result') console.log('Switched to round-result view. Waiting for external data init...');
     if (name === 'match-result') initMatchResult();
 }
 
@@ -356,8 +371,7 @@ function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
                     .catch(err => console.error("GetStartWords error:", err));
                 showState('word-select');
             } else {
-                showState('spectating', false);// ← Starta INTE timern vid ordval
-                showOpponentOverlay('Motståndaren väljer ett startord...');
+                showState('spectating', false, true);// ← Starta INTE timern vid ordval
             }
         }
     }, 1000);
@@ -378,7 +392,6 @@ function renderWordCards(words) {
         card.innerHTML = `
             <div class="word-card-num">${i + 1}</div>
             <div class="word-card-letters">${word.toUpperCase()}</div>
-            <button class="btn btn-secondary btn-sm">Välj</button>
         `;
         container.appendChild(card);
     });
@@ -416,10 +429,16 @@ function initPlayerTurn(word) {
     changedIndex = null;
     isMyTurn = true;
 
+    const feedback = document.getElementById('pt-feedback');
+    feedback.textContent = ''; // ← lägg till denna
+    feedback.style.color = '';
+    feedback.style.fontWeight = '';
+
     renderTiles();
     updateButtons();
     startTimer(currentTimerSeconds);
     document.getElementById('di-player').textContent = 'Du';
+    updateScoreboard();
 }
 
 function renderTiles() {
@@ -477,7 +496,6 @@ function undoTileChange() {
     changedIndex = null;
     renderTiles();
     updateButtons();
-    document.getElementById('pt-feedback').textContent = '';
 }
 
 function updateButtons() {
@@ -577,23 +595,27 @@ function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label', shoul
 }
 
 // ── SPECTATING ──
-function initSpectating(shouldStartTimer = true) {
+function initSpectating(shouldStartTimer = true, showOverlay = false) {
+    console.log('initSpectating called, showOverlay:', showOverlay); // ← lägg till
     renderSpectatingTiles();
     renderSpectatingHistory();
     isMyTurn = false;
+    updateScoreboard();
 
-    // Alltid nollställ timer-displayen
     const arc = document.getElementById('sp-timer-arc');
     const label = document.getElementById('sp-timer-label');
-    const circumference = 2 * Math.PI * 35;
     arc.style.strokeDashoffset = 0;
     arc.style.stroke = '#1D9E75';
     label.style.color = 'var(--text)';
     label.textContent = currentTimerSeconds;
 
-
     if (shouldStartTimer) {
         startTimer(currentTimerSeconds, 'sp-timer-arc', 'sp-timer-label', false);
+    }
+
+    if (showOverlay) {
+        console.log('Showing overlay...'); // ← lägg till
+        showOpponentOverlay('Motståndaren väljer ett startord...');
     }
 
     document.getElementById('di-player').textContent = 'Motståndare';
@@ -685,7 +707,7 @@ function initRoundResult(youWon, reason) {
 let nextRoundInterval = null;
 
 function startNextRoundCountdown() {
-    let count = 10;
+    let count = 5; //Avser sekunder
     const btn = document.getElementById('rr-next-btn');
     const countdownText = document.getElementById('rr-countdown-text');
 
@@ -712,11 +734,25 @@ function renderPips() {
     container.innerHTML = '';
     label.textContent = `Poäng (bäst av ${roundsToWin * 2 - 1})`;
 
-    for (let i = 0; i < roundsToWin * 2 - 1; i++) {
-        const pip = document.createElement('div');
-        pip.className = 'pip' + (i < scores.you ? ' won' : '');
-        container.appendChild(pip);
+    const total = roundsToWin * 2 - 1;
+    const pips = [];
+
+    // Bygg en array: grön från vänster, röd från höger, grå i mitten
+    for (let i = 0; i < total; i++) {
+        if (i < scores.you) {
+            pips[i] = 'won';
+        } else if (i >= total - scores.opponent) {
+            pips[i] = 'lost';
+        } else {
+            pips[i] = '';
+        }
     }
+
+    pips.forEach(state => {
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (state ? ` ${state}` : '');
+        container.appendChild(pip);
+    });
 }
 
 function onRoundResultNext() {
@@ -753,11 +789,24 @@ function renderMatchPips() {
     const container = document.getElementById('mr-pips');
     container.innerHTML = '';
 
-    for (let i = 0; i < roundsToWin * 2 - 1; i++) {
-        const pip = document.createElement('div');
-        pip.className = 'pip' + (i < scores.you ? ' won' : '');
-        container.appendChild(pip);
+    const total = roundsToWin * 2 - 1;
+    const pips = [];
+
+    for (let i = 0; i < total; i++) {
+        if (i < scores.you) {
+            pips[i] = 'won';
+        } else if (i >= total - scores.opponent) {
+            pips[i] = 'lost';
+        } else {
+            pips[i] = '';
+        }
     }
+
+    pips.forEach(state => {
+        const pip = document.createElement('div');
+        pip.className = 'pip' + (state ? ` ${state}` : '');
+        container.appendChild(pip);
+    });
 }
 
 function resetGame() {
@@ -770,4 +819,27 @@ function resetGame() {
     isMyTurn = false;
     updateRoomCodeUi('WD-4829');
     showState('lobby');
+}
+
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const submitBtn = document.getElementById('pt-submit-btn');
+        if (submitBtn && !submitBtn.disabled) {
+            submitWord();
+        }
+    }
+    if (e.key === 'Escape') {
+        const undoBtn = document.getElementById('pt-undo-btn');
+        if (undoBtn && !undoBtn.disabled) {
+            undoTileChange();
+        }
+    }
+});
+
+function updateScoreboard() {
+    document.getElementById('pt-score-you').textContent = scores.you;
+    document.getElementById('pt-score-opponent').textContent = scores.opponent;
+    document.getElementById('sp-score-you').textContent = scores.you;
+    document.getElementById('sp-score-opponent').textContent = scores.opponent;
 }
