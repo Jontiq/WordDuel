@@ -50,8 +50,8 @@
 
     @* KNAPPAR FÖR "JOIN GAME" OCH "HOST GAME" *@
     <div class="row">
-        <button class="btn btn-secondary btn-full btn-lg" onclick="hostGame()">HOST GAME</button>
-        <button class="btn btn-primary btn-full btn-lg" onclick="openJoinModal()">JOIN GAME</button>
+        <button class="btn btn-secondary btn-full btn-lg" onclick="hostGame()">SKAPA NYTT SPEL</button>
+        <button class="btn btn-primary btn-full btn-lg" onclick="openJoinModal()">GÅ MED I SPEL</button>
     </div>
     <p class="center" style="font-size:13px; color:var(--muted);">Starta ett nytt spel eller anslut till ett existerande.</p>
 
@@ -184,6 +184,7 @@
     </div>
 </div>
 
+
 <!-- STATE: SPECTATING -->
 <div class="page" id="state-spectating">
 
@@ -211,18 +212,23 @@
         </div>
     </div>
 
-    <!-- Tiles (ej klickbara) -->
-    <div class="card center">
-        <div class="badge badge-amber" style="margin-bottom:16px;">
-            <span class="badge-dot"></span> Motståndarens tur – byter en bokstav
-        </div>
-        <div class="word-tiles" id="sp-tiles"></div>
-    </div>
+    <!-- Huvud-layout: aktiv zon + historik -->
+    <div class="game-layout">
 
-    <!-- Ordlista -->
-    <div class="card">
-        <div class="card-title">Ord denna omgång</div>
-        <div class="word-history-list" id="sp-word-history"></div>
+        <!-- Vänster: aktiv zon -->
+        <div class="card game-active-zone">
+            <div class="badge badge-amber" style="margin-bottom:20px;">
+                <span class="badge-dot"></span> Motståndarens tur – byter en bokstav
+            </div>
+            <div class="word-tiles" id="sp-tiles"></div>
+        </div>
+
+        <!-- Höger: historik -->
+        <div class="card game-history-zone">
+            <div class="card-title">Ord denna omgång</div>
+            <div class="word-history-list" id="sp-word-history"></div>
+        </div>
+
     </div>
 
 </div>
@@ -254,26 +260,31 @@
         </div>
     </div>
 
-    <!-- Tiles -->
-    <div class="card center">
-        <div class="badge badge-teal" style="margin-bottom:16px;">
-            <span class="badge-dot"></span> Din tur – byt en bokstav
+    <!-- Huvud-layout: aktiv zon + historik -->
+    <div class="game-layout">
+
+        <!-- Vänster: aktiv zon -->
+        <div class="card game-active-zone">
+            <div class="badge badge-teal" style="margin-bottom:20px;">
+                <span class="badge-dot"></span> Din tur – byt en bokstav
+            </div>
+            <div class="word-tiles" id="pt-tiles"></div>
+            <p id="pt-feedback" style="font-size:13px; min-height:20px; margin-top:12px;"></p>
         </div>
-        <div class="word-tiles" id="pt-tiles"></div>
-        <p id="pt-feedback" style="font-size:13px; color:var(--muted); min-height:20px; margin-top:8px;"></p>
+
+        <!-- Höger: historik -->
+        <div class="card game-history-zone">
+            <div class="card-title">Ord denna omgång</div>
+            <div class="word-history-list" id="pt-word-history"></div>
+        </div>
+
     </div>
 
-    <!-- Ordlista -->
-    <div class="card">
-        <div class="card-title">Ord denna omgång</div>
-        <div class="word-history-list" id="pt-word-history"></div>
-    </div>
-
-    <!-- Knappar -->
-    <div class="row">
-        <button class="btn btn-danger btn-full" onclick="giveUp()">Ge upp</button>
-        <button class="btn btn-secondary btn-full" id="pt-undo-btn" onclick="undoTileChange()" disabled>Ångra</button>
-        <button class="btn btn-primary btn-full btn-lg" id="pt-submit-btn" onclick="submitWord()" disabled>Klar</button>
+    <!-- Knappar: 1/4 - 2/4 - 1/4 -->
+    <div class="game-actions">
+        <button class="btn btn-secondary" id="pt-undo-btn" onclick="undoTileChange()" disabled>Ångra</button>
+        <button class="btn btn-primary btn-lg" id="pt-submit-btn" onclick="submitWord()" disabled>Klar</button>
+        <button class="btn btn-danger" onclick="giveUp()">Ge upp</button>
     </div>
 
 </div>
