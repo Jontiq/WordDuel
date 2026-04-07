@@ -30,6 +30,13 @@ connection.on("OnPlayerJoined", () => {
     console.log("Opponent joined!");
 });
 
+// Spelinställningar mottagna (för den som joinar)
+connection.on("OnGameSettings", (data) => {
+    roundsToWin = data.roundsToWin;
+    currentTimerSeconds = data.secondsPerRound;
+    console.log(`Settings synced: roundsToWin=${roundsToWin}, timer=${currentTimerSeconds}s`);
+});
+
 // Coin flip-resultat från BLL
 connection.on("OnCoinFlipResult", (starterIndex) => {
     const iStart = starterIndex === myPlayerIndex ? 0 : 1;
@@ -152,7 +159,7 @@ function togglePanel() {
 }
 
 // ── STATE SWITCHER ──
-function showState(name) {
+function showState(name, withTimer = true) {
     clearInterval(nextRoundInterval);
     clearInterval(timerInterval);
     clearInterval(coinFlipInterval);
@@ -180,7 +187,7 @@ function showState(name) {
     if (name === 'player-turn') {
         initPlayerTurn(selectedWord || 'LUNKA');
     }
-    if (name === 'spectating') initSpectating();
+    if (name === 'spectating') initSpectating(withTimer);
     if (name === 'round-result') {
         console.log('Switched to round-result view. Waiting for external data init...');
     }
@@ -206,7 +213,7 @@ function hostGame() {
     myPlayerName = "Player 1";
     myPlayerId = 1;       
 
-    connection.invoke("HostGame", roundsToWin, myPlayerName)
+    connection.invoke("HostGame", roundsToWin, currentTimerSeconds, myPlayerName)
         .catch(err => console.error("HostGame error:", err));
 }
 
@@ -308,7 +315,7 @@ function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
                     .catch(err => console.error("GetStartWords error:", err));
                 showState('word-select');
             } else {
-                showState('spectating');
+                showState('spectating', false);// ← Starta INTE timern vid ordval
                 showOpponentOverlay('Motståndaren väljer ett startord...');
             }
         }
@@ -491,12 +498,12 @@ let timerActive = false;
 let coinFlipInterval = null;
 let coinFlipActive = false;
 
-function startTimer(seconds) {
+function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label') {
     clearInterval(timerInterval);
     timerActive = true;
     let remaining = seconds;
-    const arc = document.getElementById('timer-arc');
-    const label = document.getElementById('timer-label');
+    const arc = document.getElementById(arcId);
+    const label = document.getElementById(labelId);
     const circumference = 2 * Math.PI * 35;
 
     function update() {
@@ -522,10 +529,25 @@ function startTimer(seconds) {
 }
 
 // ── SPECTATING ──
-function initSpectating() {
+function initSpectating(shouldStartTimer = true) {
     renderSpectatingTiles();
     renderSpectatingHistory();
     isMyTurn = false;
+
+    // Alltid nollställ timer-displayen
+    const arc = document.getElementById('sp-timer-arc');
+    const label = document.getElementById('sp-timer-label');
+    const circumference = 2 * Math.PI * 35;
+    arc.style.strokeDashoffset = 0;
+    arc.style.stroke = '#1D9E75';
+    label.style.color = 'var(--text)';
+    label.textContent = currentTimerSeconds;
+
+
+    if (shouldStartTimer) {
+        startTimer(currentTimerSeconds, 'sp-timer-arc', 'sp-timer-label');
+    }
+
     document.getElementById('di-player').textContent = 'Motståndare';
 }
 
