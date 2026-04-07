@@ -10,6 +10,21 @@ let myPlayerId = null;
 let myPlayerName = null;
 let nextRoundStarterId = null;
 
+function resetLocalGameState() {
+    scores = { you: 0, opponent: 0 };
+    wordHistory = [];
+    selectedWord = null;
+    changedIndex = null;
+    currentWord = [];
+    originalWord = [];
+    nextRoundStarterId = null;
+}
+
+function updateRoomCodeUi(code) {
+    document.getElementById('room-code').textContent = code ?? '';
+    document.getElementById('di-session').textContent = code ?? '';
+}
+
 // Starta anslutningen
 connection.start()
     .then(() => console.log("SignalR connected"))
@@ -21,8 +36,8 @@ connection.start()
 connection.on("OnGameHosted", (data) => {
     roomCode = data.roomCode;
     myPlayerIndex = 0;
-    document.getElementById('room-code').textContent = data.roomCode;
-    document.getElementById('di-session').textContent = data.roomCode;
+    resetLocalGameState();
+    updateRoomCodeUi(data.roomCode);
     showState('waiting');
 });
 
@@ -233,6 +248,7 @@ function hostGame() {
     roundsToWin = Math.ceil(setsText / 2);
     currentTimerSeconds = timeChip ? parseInt(timeChip.textContent) : 30;
 
+    resetLocalGameState();
     myPlayerName = "Player 1";
     myPlayerId = 1;       
 
@@ -255,14 +271,17 @@ function submitJoinCode() {
     const code = document.getElementById('join-code-input').value.trim().toUpperCase();
     if (code.length < 7) return;
 
+    resetLocalGameState();
     myPlayerIndex = 1;
     myPlayerName = "Player 2";
     myPlayerId = 2;
     roomCode = code;
+    updateRoomCodeUi(code);
 
     connection.invoke("JoinGame", code, myPlayerName)
         .catch(err => console.error("JoinGame error:", err));
 
+    document.getElementById('join-code-input').value = '';
     closeJoinModal();
 }
 
@@ -736,15 +755,13 @@ function renderMatchPips() {
 }
 
 function resetGame() {
-    scores = { you: 0, opponent: 0 };
-    wordHistory = [];
-    selectedWord = null;
-    changedIndex = null;
-    currentWord = [];
-    originalWord = [];
+    resetLocalGameState();
     roomCode = null;
     myPlayerIndex = null;
+    myPlayerId = null;
+    myPlayerName = null;
     nextRoundStarterId = null;
     isMyTurn = false;
+    updateRoomCodeUi('WD-4829');
     showState('lobby');
 }
