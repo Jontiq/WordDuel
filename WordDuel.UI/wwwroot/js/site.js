@@ -10,6 +10,21 @@ let myPlayerId = null;
 let myPlayerName = null;
 let nextRoundStarterId = null;
 
+function resetLocalGameState() {
+    scores = { you: 0, opponent: 0 };
+    wordHistory = [];
+    selectedWord = null;
+    changedIndex = null;
+    currentWord = [];
+    originalWord = [];
+    nextRoundStarterId = null;
+}
+
+function updateRoomCodeUi(code) {
+    document.getElementById('room-code').textContent = code ?? '';
+    document.getElementById('di-session').textContent = code ?? '';
+}
+
 // Starta anslutningen
 connection.start()
     .then(() => console.log("SignalR connected"))
@@ -236,6 +251,7 @@ function hostGame() {
     roundsToWin = Math.ceil(setsText / 2);
     currentTimerSeconds = timeChip ? parseInt(timeChip.textContent) : 30;
 
+    resetLocalGameState();
     myPlayerName = "Player 1";
 
     connection.invoke("HostGame", roundsToWin, currentTimerSeconds, myPlayerName)
@@ -259,10 +275,12 @@ function submitJoinCode() {
 
     myPlayerName = "Player 2";
     roomCode = code;
+    updateRoomCodeUi(code);
 
     connection.invoke("JoinGame", code, myPlayerName)
         .catch(err => console.error("JoinGame error:", err));
 
+    document.getElementById('join-code-input').value = '';
     closeJoinModal();
 }
 
@@ -524,7 +542,7 @@ let timerActive = false;
 let coinFlipInterval = null;
 let coinFlipActive = false;
 
-function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label') {
+function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label', shouldNotifyServer = true) {
     clearInterval(timerInterval);
     timerActive = true;
     let remaining = seconds;
@@ -575,7 +593,7 @@ function initSpectating(shouldStartTimer = true) {
 
 
     if (shouldStartTimer) {
-        startTimer(currentTimerSeconds, 'sp-timer-arc', 'sp-timer-label');
+        startTimer(currentTimerSeconds, 'sp-timer-arc', 'sp-timer-label', false);
     }
 
     document.getElementById('di-player').textContent = 'Motståndare';
@@ -743,15 +761,13 @@ function renderMatchPips() {
 }
 
 function resetGame() {
-    scores = { you: 0, opponent: 0 };
-    wordHistory = [];
-    selectedWord = null;
-    changedIndex = null;
-    currentWord = [];
-    originalWord = [];
+    resetLocalGameState();
     roomCode = null;
     myPlayerIndex = null;
+    myPlayerId = null;
+    myPlayerName = null;
     nextRoundStarterId = null;
     isMyTurn = false;
+    updateRoomCodeUi('WD-4829');
     showState('lobby');
 }
