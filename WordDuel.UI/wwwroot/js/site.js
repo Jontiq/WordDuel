@@ -35,9 +35,10 @@ connection.start()
 // Värden har skapat spelet
 connection.on("OnGameHosted", (data) => {
     roomCode = data.roomCode;
-    myPlayerIndex = 0;
-    resetLocalGameState();
-    updateRoomCodeUi(data.roomCode);
+    myPlayerIndex = data.playerIndex;
+    myPlayerId = data.playerId;  //DB-genererat ID
+    document.getElementById('room-code').textContent = data.roomCode;
+    document.getElementById('di-session').textContent = data.roomCode;
     showState('waiting');
 });
 
@@ -50,6 +51,8 @@ connection.on("OnPlayerJoined", () => {
 connection.on("OnGameSettings", (data) => {
     roundsToWin = data.roundsToWin;
     currentTimerSeconds = data.secondsPerRound;
+    myPlayerId = data.playerId;  //DB-genererat ID
+    myPlayerIndex = data.playerIndex;
     console.log(`Settings synced: roundsToWin=${roundsToWin}, timer=${currentTimerSeconds}s`);
 });
 
@@ -250,7 +253,6 @@ function hostGame() {
 
     resetLocalGameState();
     myPlayerName = "Player 1";
-    myPlayerId = 1;       
 
     connection.invoke("HostGame", roundsToWin, currentTimerSeconds, myPlayerName)
         .catch(err => console.error("HostGame error:", err));
@@ -271,10 +273,7 @@ function submitJoinCode() {
     const code = document.getElementById('join-code-input').value.trim().toUpperCase();
     if (code.length < 7) return;
 
-    resetLocalGameState();
-    myPlayerIndex = 1;
     myPlayerName = "Player 2";
-    myPlayerId = 2;
     roomCode = code;
     updateRoomCodeUi(code);
 
@@ -496,6 +495,9 @@ function submitWord() {
 }
 
 function giveUp() {
+    if (!isMyTurn) return; //Förhindra dubbla anrop
+    isMyTurn = false;
+
     clearInterval(timerInterval);
     timerActive = false;
 
@@ -560,7 +562,9 @@ function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label', shoul
         if (remaining <= 0) {
             clearInterval(timerInterval);
             timerActive = false;
-            if (shouldNotifyServer) {
+
+            if (isMyTurn) { //Bara skicka om det faktiskt är min tur
+                isMyTurn = false;
                 connection.invoke("TimerExpired", roomCode)
                     .catch(err => console.error("TimerExpired error:", err));
             }

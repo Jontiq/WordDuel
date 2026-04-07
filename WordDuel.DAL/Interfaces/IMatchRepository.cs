@@ -8,6 +8,7 @@ namespace WordDuel.DAL.Interfaces
     public interface IMatchRepository
     {
         Task<MatchModel?> GetByIdAsync(int id); // hämtar en match baserat på id
+        Task<MatchModel?> GetByRoomCodeAsync(string roomCode); // Hämtar gameroom i vilket matchen utspelar sig
         Task<MatchModel> CreateAsync(MatchModel match); // skapar en ny match
         Task<MatchModel> UpdateAsync(MatchModel match); // uppdaterar en match
         Task<bool> DeleteAsync(int id); // tar bort en match baserat på id
