@@ -707,7 +707,7 @@ function initRoundResult(youWon, reason) {
 let nextRoundInterval = null;
 
 function startNextRoundCountdown() {
-    let count = 10;
+    let count = 5; //Avser sekunder
     const btn = document.getElementById('rr-next-btn');
     const countdownText = document.getElementById('rr-countdown-text');
 
