@@ -142,7 +142,7 @@ public class MatchService : IMatchService
             match.CurrentPlayer = null;
             return;
         }
-        // The loser starts the next round according to your game rules.
+        // The loser starts the next round according to the game rules.
         match.CurrentPlayer = loser;
     }
 
