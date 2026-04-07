@@ -104,8 +104,7 @@ connection.on("OnNextRoundStarter", (data) => {
             .catch(err => console.error("GetStartWords error:", err));
         showState('word-select');
     } else {
-        showState('spectating', false);
-        showOpponentOverlay('Motståndaren väljer ett startord...');
+        showState('spectating', false, true);
     }
 });
 
@@ -218,15 +217,17 @@ function togglePanel() {
 }
 
 // ── STATE SWITCHER ──
-function showState(name, withTimer = true) {
+function showState(name, withTimer = true, withOverlay = false) {
     clearInterval(nextRoundInterval);
     clearInterval(timerInterval);
     clearInterval(coinFlipInterval);
     clearInterval(spectatingTimerInterval);
-    hideOpponentOverlay();
     coinFlipActive = false;
     timerActive = false;
     spectatingTimerActive = false;
+
+    // Dölj overlay bara om vi INTE ska visa den
+    if (!withOverlay) hideOpponentOverlay();
 
     console.log('showState called with: ' + name);
 
@@ -243,13 +244,9 @@ function showState(name, withTimer = true) {
     document.getElementById('di-gamestate').textContent = name;
 
     if (name === 'coin-flip') startCoinFlip();
-    if (name === 'player-turn') {
-        initPlayerTurn(selectedWord || 'LUNKA');
-    }
-    if (name === 'spectating') initSpectating(withTimer);
-    if (name === 'round-result') {
-        console.log('Switched to round-result view. Waiting for external data init...');
-    }
+    if (name === 'player-turn') initPlayerTurn(selectedWord || 'LUNKA');
+    if (name === 'spectating') initSpectating(withTimer, withOverlay);
+    if (name === 'round-result') console.log('Switched to round-result view. Waiting for external data init...');
     if (name === 'match-result') initMatchResult();
 }
 
@@ -374,8 +371,7 @@ function showCoinFlipResult(winner, result, resultText, countdown, countEl) {
                     .catch(err => console.error("GetStartWords error:", err));
                 showState('word-select');
             } else {
-                showState('spectating', false);// ← Starta INTE timern vid ordval
-                showOpponentOverlay('Motståndaren väljer ett startord...');
+                showState('spectating', false, true);// ← Starta INTE timern vid ordval
             }
         }
     }, 1000);
@@ -442,6 +438,7 @@ function initPlayerTurn(word) {
     updateButtons();
     startTimer(currentTimerSeconds);
     document.getElementById('di-player').textContent = 'Du';
+    updateScoreboard();
 }
 
 function renderTiles() {
@@ -598,23 +595,27 @@ function startTimer(seconds, arcId = 'timer-arc', labelId = 'timer-label', shoul
 }
 
 // ── SPECTATING ──
-function initSpectating(shouldStartTimer = true) {
+function initSpectating(shouldStartTimer = true, showOverlay = false) {
+    console.log('initSpectating called, showOverlay:', showOverlay); // ← lägg till
     renderSpectatingTiles();
     renderSpectatingHistory();
     isMyTurn = false;
+    updateScoreboard();
 
-    // Alltid nollställ timer-displayen
     const arc = document.getElementById('sp-timer-arc');
     const label = document.getElementById('sp-timer-label');
-    const circumference = 2 * Math.PI * 35;
     arc.style.strokeDashoffset = 0;
     arc.style.stroke = '#1D9E75';
     label.style.color = 'var(--text)';
     label.textContent = currentTimerSeconds;
 
-
     if (shouldStartTimer) {
         startTimer(currentTimerSeconds, 'sp-timer-arc', 'sp-timer-label', false);
+    }
+
+    if (showOverlay) {
+        console.log('Showing overlay...'); // ← lägg till
+        showOpponentOverlay('Motståndaren väljer ett startord...');
     }
 
     document.getElementById('di-player').textContent = 'Motståndare';
@@ -835,3 +836,10 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+function updateScoreboard() {
+    document.getElementById('pt-score-you').textContent = scores.you;
+    document.getElementById('pt-score-opponent').textContent = scores.opponent;
+    document.getElementById('sp-score-you').textContent = scores.you;
+    document.getElementById('sp-score-opponent').textContent = scores.opponent;
+}
