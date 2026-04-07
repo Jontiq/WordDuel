@@ -21,7 +21,7 @@ public class MatchService : IMatchService
 
     // Creates a new match and immediately adds the first player.
     // The match starts in WaitingForPlayers because player 2 has not joined yet.
-    public MatchDto CreateMatch(int roundsToWin, string? firstPlayerName)
+    public MatchDto CreateMatch(int roundsToWin,  int secondsPerRound, string? firstPlayerName)
     {
         if (roundsToWin <= 0)
             throw new ArgumentException("RoundsToWin must be greater than 0");
@@ -29,6 +29,7 @@ public class MatchService : IMatchService
         var match = new MatchDto
         {
             RoundsToWin = roundsToWin,
+            TurnTimeSeconds = secondsPerRound,
             State = MatchState.WaitingForPlayers
         };
 

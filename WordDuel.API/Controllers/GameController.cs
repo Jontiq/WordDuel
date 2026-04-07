@@ -25,7 +25,7 @@ public class GameController : ControllerBase
     [HttpPost("host")]
     public IActionResult HostGame([FromBody] HostGameRequest request)
     {
-        var match = _matchService.CreateMatch(request.RoundsToWin, request.PlayerName);
+        var match = _matchService.CreateMatch(request.RoundsToWin, request.SecondsPerRound, request.PlayerName);
 
         var roomCode = GenerateRoomCode();
         match.RoomCode = roomCode;
@@ -212,7 +212,7 @@ public class GameController : ControllerBase
 }
 
 // ── REQUEST MODELS ──
-public record HostGameRequest(int RoundsToWin, string PlayerName);
+public record HostGameRequest(int RoundsToWin, int SecondsPerRound, string PlayerName);
 public record JoinGameRequest(string PlayerName);
 public record SelectWordRequest(string Word);
 public record SubmitWordRequest(int PlayerId, string Word);
