@@ -43,7 +43,7 @@ builder.Services.AddSingleton<IWordRepository, WordRepository>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<IWordService, WordService>();
 builder.Services.AddScoped<IMatchPersistence, MatchPersistence>();
-//builder.Services.AddSingleton<SessionStore>();
+builder.Services.AddSingleton<SessionStore>();
 builder.Services.AddTransient<Random>();
 
 var app = builder.Build();

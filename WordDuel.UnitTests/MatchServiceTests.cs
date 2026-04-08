@@ -1,20 +1,29 @@
+using Moq;
 using WordDuel.BLL.GameLogicServices;
 using WordDuel.BLL.WordServices;
 using WordDuel.Shared.DTOs;
 using WordDuel.Shared.Enums;
-using WordDuel.UnitTests.Fakes;
 
 namespace WordDuel.UnitTests;
 
 public class MatchServiceTests
 {
     private readonly MatchService service;
+    private readonly Mock<IWordService> wordServiceMock;
 
     public MatchServiceTests()
     {
-        var fakeRepo = new FakeWordRepository(); // Using a fake repo makes tests deterministic and independent of the real word source.
-        var wordService = new WordService(fakeRepo);
-        service = new MatchService(wordService, new Random());
+        wordServiceMock = new Mock<IWordService>();
+
+        wordServiceMock
+            .Setup(x => x.IsValidWordAsync(It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        wordServiceMock
+            .Setup(x => x.OneLetterChangedAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        service = new MatchService(wordServiceMock.Object, new Random());
     }
 
     private MatchDto CreateMatchWithTwoPlayers()
@@ -51,6 +60,7 @@ public class MatchServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(3, result.RoundsToWin);
+        Assert.Equal(30, result.TurnTimeSeconds);
         Assert.Equal(MatchState.WaitingForPlayers, result.State);
         Assert.Single(result.Players);
         Assert.Equal("Anna", result.Players[0].Name);
@@ -143,7 +153,7 @@ public class MatchServiceTests
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
 
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         var round = match.Rounds[0];
 
@@ -162,7 +172,21 @@ public class MatchServiceTests
         var match = CreateMatchWithTwoPlayers();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.StartNewRoundAsync(match, "spela"));
+            service.StartNewRoundAsync(match, "stark"));
+    }
+
+    [Fact]
+    public async Task StartNewRoundAsync_ShouldThrowException_WhenStartingWordIsInvalid()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+
+        wordServiceMock
+            .Setup(x => x.IsValidWordAsync("ogilt"))
+            .ReturnsAsync(false);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.StartNewRoundAsync(match, "ogilt"));
     }
 
     [Fact]
@@ -181,7 +205,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.EndRound(match, match.Players[0].Id);
 
@@ -195,7 +219,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
         match.Players[0].Score = 2;
 
         service.EndRound(match, match.Players[0].Id);
@@ -210,7 +234,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.EndRound(match, match.Players[0].Id);
 
@@ -222,7 +246,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -235,7 +259,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -247,7 +271,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
         match.Players[1].Score = 2;
 
         service.GiveUpRound(match, match.Players[0].Id);
@@ -261,7 +285,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.GiveUpRound(match, match.Players[0].Id);
 
@@ -273,7 +297,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
@@ -286,7 +310,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
@@ -298,7 +322,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
         match.Players[1].Score = 2;
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
@@ -312,7 +336,7 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithTwoPlayers();
         service.StartMatch(match);
-        await service.StartNewRoundAsync(match, "spela");
+        await service.StartNewRoundAsync(match, "stark");
 
         service.HandleTurnTimeout(match, match.Players[0].Id);
 
@@ -365,6 +389,10 @@ public class MatchServiceTests
     {
         var match = CreateMatchWithActiveRound("stark");
 
+        wordServiceMock
+            .Setup(x => x.IsValidWordAsync("zzzzz"))
+            .ReturnsAsync(false);
+
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SubmitMoveAsync(match, match.Players[0].Id, "zzzzz"));
     }
@@ -373,6 +401,10 @@ public class MatchServiceTests
     public async Task SubmitMoveAsync_ShouldThrow_WhenMoreThanOneLetterIsChanged()
     {
         var match = CreateMatchWithActiveRound("stark");
+
+        wordServiceMock
+            .Setup(x => x.OneLetterChangedAsync("sport", "stark"))
+            .ReturnsAsync(false);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SubmitMoveAsync(match, match.Players[0].Id, "sport"));

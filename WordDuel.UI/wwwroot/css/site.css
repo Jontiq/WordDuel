@@ -1,6 +1,4 @@
-
-/*DEV TOOL THINGYS*/
-
+/* ── DEV TOOLS ── */
 .info-panel {
     display: none;
 }
@@ -30,39 +28,7 @@
     font-family: 'DM Mono', monospace;
 }
 
-
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
-}
-
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
-}
-
+/* ── BASE ── */
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -89,6 +55,18 @@ body {
     --shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
+html {
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
 body {
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
@@ -96,6 +74,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    margin-bottom: 60px;
 }
 
 /* ── DEV NAV ── */
@@ -169,14 +148,14 @@ body {
     vertical-align: super;
 }
 
-/* ── MAIN ── */
+/* ── PAGE ── */
 .page {
     display: none;
     flex-direction: column;
     align-items: center;
-    padding: 32px 20px 60px;
+    padding: 16px 12px 60px;
     gap: 24px;
-    max-width: 860px;
+    max-width: 960px;
     margin: 0 auto;
     width: 100%;
 }
@@ -190,7 +169,7 @@ body {
     background: var(--surface);
     border-radius: var(--radius);
     border: 1px solid var(--border);
-    padding: 28px 32px;
+    padding: 20px 16px;
     width: 100%;
     box-shadow: var(--shadow);
 }
@@ -222,12 +201,22 @@ body {
 }
 
 .btn-primary {
-    background: var(--teal);
-    color: #fff;
+    background: var(--teal) !important;
+    border-color: var(--teal) !important;
+    color: #fff !important;
 }
 
     .btn-primary:hover {
-        background: var(--teal-dark);
+        background: var(--teal-dark) !important;
+        border-color: var(--teal-dark) !important;
+    }
+
+    .btn-primary:disabled {
+        background: var(--teal-light) !important;
+        border-color: var(--teal-mid) !important;
+        color: var(--teal-dark) !important;
+        cursor: not-allowed;
+        opacity: 0.7;
     }
 
 .btn-secondary {
@@ -238,6 +227,11 @@ body {
 
     .btn-secondary:hover {
         background: var(--teal-light);
+    }
+
+    .btn-secondary:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
     }
 
 .btn-danger {
@@ -263,7 +257,7 @@ body {
     font-size: 13px;
 }
 
-/* ── CHIPS / OPTION GROUPS ── */
+/* ── CHIPS ── */
 .option-group {
     display: flex;
     gap: 10px;
@@ -453,7 +447,40 @@ body {
         color: var(--teal-dark);
     }
 
-/* ── STATUS BADGE ── */
+.word-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+}
+
+.word-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+    .word-history-item.latest {
+        background: var(--teal-light);
+        border-color: var(--teal-mid);
+        color: var(--teal-dark);
+    }
+
+    .word-history-item .word-meta {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: 'DM Sans', sans-serif;
+        text-transform: none;
+    }
+
+/* ── BADGE ── */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -558,6 +585,10 @@ body {
         background: var(--teal);
     }
 
+    .pip.lost {
+        background: var(--red);
+    }
+
 /* ── LAYOUT HELPERS ── */
 .row {
     display: flex;
@@ -629,24 +660,7 @@ hr.divider {
     flex-shrink: 0;
 }
 
-
-@media(max-width: 600px) {
-    .row {
-        flex-direction: column;
-    }
-
-    .tile {
-        width: 50px;
-        height: 50px;
-        font-size: 22px;
-    }
-
-        .tile input {
-            font-size: 22px;
-        }
-}
-
-/*JOIN GAME MODAL*/
+/* ── JOIN MODAL ── */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -664,8 +678,8 @@ hr.divider {
 .modal-box {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Centrerar allt innehåll horisontellt */
-    text-align: center; /* Centrerar texten i paragrafer/titlar */
+    align-items: center;
+    text-align: center;
     background: var(--surface);
     border-radius: var(--radius);
     border: 1px solid var(--border);
@@ -674,11 +688,11 @@ hr.divider {
     max-width: 380px;
 }
 
-.modal-box .row.mt {
-    flex-direction: column; /* Stapla knapparna */
-    gap: 12px; /* Mellanrum mellan Avbryt och Gå med */
-    width: 100%; /* Låt knapparna ta upp bredden */
-}
+    .modal-box .row.mt {
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
 
 .code-input {
     width: 100%;
@@ -700,8 +714,7 @@ hr.divider {
         border-color: var(--teal);
     }
 
-
-/*COIN-FLIP*/
+/* ── COIN FLIP ── */
 .cf-player {
     display: flex;
     flex-direction: column;
@@ -740,8 +753,7 @@ hr.divider {
     justify-content: center;
 }
 
-/*WORD SELECT*/
-
+/* ── WORD SELECT ── */
 .word-cards {
     display: flex;
     gap: 16px;
@@ -786,37 +798,191 @@ hr.divider {
     letter-spacing: 0.05em;
 }
 
-/*PLAYER TURN*/
-.word-history-list {
+/* ── GAME LAYOUT (player-turn & spectating) ── */
+.game-layout {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    align-items: stretch;
+}
+
+.game-active-zone {
+    flex: 2;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    max-height: 180px;
-    overflow-y: auto;
-}
-
-.word-history-item {
-    display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    text-transform: uppercase;
 }
 
-    .word-history-item.latest {
-        background: var(--teal-light);
-        border-color: var(--teal-mid);
-        color: var(--teal-dark);
+.game-history-zone {
+    flex: 1;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    max-height: 300px;
+}
+
+    .game-history-zone .word-history-list {
+        flex: 1;
+        overflow-y: auto;
     }
 
-    .word-history-item .word-meta {
-        font-size: 11px;
-        color: var(--muted);
-        font-family: 'DM Sans', sans-serif;
-        text-transform: none;
+/* ── GAME ACTIONS ── */
+.game-actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+    .game-actions #pt-submit-btn {
+        flex: 2;
     }
+
+    .game-actions #pt-undo-btn {
+        flex: 1;
+    }
+
+    .game-actions .btn-danger {
+        flex: 1;
+    }
+
+/* ── BOOTSTRAP FOCUS OVERRIDE ── */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+    .row {
+        flex-direction: column;
+    }
+
+    .tile {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+    }
+
+        .tile input {
+            font-size: 22px;
+        }
+
+    .game-layout {
+        flex-direction: column;
+    }
+
+    .game-actions {
+        flex-wrap: wrap;
+    }
+
+    /* 1. Coin flip – mindre hjul, avatarer inuti */
+    .cf-wheel-wrap svg {
+        width: 70px;
+        height: 70px;
+    }
+
+    .cf-avatar {
+        width: 52px;
+        height: 52px;
+        font-size: 16px;
+    }
+
+    .cf-name {
+        font-size: 12px;
+    }
+
+    /* 2. Word select – stapla korten vertikalt */
+    .word-cards {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .word-card {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .word-card-letters {
+        font-size: 22px;
+    }
+
+    .word-card-num {
+        font-size: 11px;
+        min-width: 20px;
+    }
+
+    /* 3. Scoreboard – kompaktare */
+    .player-score {
+        padding: 10px 6px;
+    }
+
+        .player-score .pts {
+            font-size: 24px;
+        }
+
+        .player-score .name {
+            font-size: 11px;
+        }
+
+    .timer-label {
+        font-size: 16px;
+    }
+
+    .timer-ring {
+        width: 60px;
+        height: 60px;
+    }
+
+        .timer-ring svg {
+            width: 60px;
+            height: 60px;
+        }
+
+    /* Game layout – stapla vertikalt på mobil */
+    .game-layout {
+        flex-direction: column;
+    }
+
+    .game-history-zone {
+        max-height: 200px;
+    }
+
+    /* Tiles – lite mindre */
+    .tile {
+        width: 50px;
+        height: 50px;
+        font-size: 22px;
+    }
+
+        .tile input {
+            font-size: 22px;
+        }
+
+    /* Knappar */
+    .game-actions {
+        flex-wrap: nowrap;
+    }
+
+        .game-actions #pt-submit-btn {
+            flex: 2;
+        }
+
+        .game-actions #pt-undo-btn,
+        .game-actions .btn-danger {
+            flex: 1;
+        }
+}
+}
