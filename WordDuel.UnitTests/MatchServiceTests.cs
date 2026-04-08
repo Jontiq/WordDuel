@@ -9,12 +9,13 @@ namespace WordDuel.UnitTests;
 public class MatchServiceTests
 {
     private readonly MatchService service;
-    private readonly Mock<IWordService> wordServiceMock;
+    private readonly Mock<IWordService> wordServiceMock; // Mocking IWordService to control its behavior during tests
 
     public MatchServiceTests()
     {
-        wordServiceMock = new Mock<IWordService>();
+        wordServiceMock = new Mock<IWordService>(); // Create a mock instance of IWordService
 
+        // Set up default behavior for the mock to return true for valid words and one letter changed checks
         wordServiceMock
             .Setup(x => x.IsValidWordAsync(It.IsAny<string>()))
             .ReturnsAsync(true);
@@ -23,7 +24,7 @@ public class MatchServiceTests
             .Setup(x => x.OneLetterChangedAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
 
-        service = new MatchService(wordServiceMock.Object, new Random());
+        service = new MatchService(wordServiceMock.Object, new Random()); // Inject the mock IWordService into the MatchService
     }
 
     private MatchDto CreateMatchWithTwoPlayers()
