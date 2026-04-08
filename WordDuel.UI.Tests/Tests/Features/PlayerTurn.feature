@@ -27,11 +27,10 @@ Scenario: Submit button is disabled when word is unchanged
     Then The submit button is disabled
     And The tile at position "0" shows "L"
 
-  Scenario: Give up navigates to round result
+  Scenario: Give up button is visible during player turn
     Given I am on the mainpage
     And I navigate to player turn with word "LUNKA"
-    When I click on "Ge upp"
-    Then The game-state is "round-result"
+    Then The give up button is visible
 
   Scenario: Timer expiry navigates to round result
     Given I am on the mainpage

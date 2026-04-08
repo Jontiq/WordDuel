@@ -6,6 +6,8 @@ using WordDuel.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("https://0.0.0.0:7057", "http://0.0.0.0:5227");
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 
@@ -18,6 +20,8 @@ builder.Services.AddSingleton<IWordRepository>(new WordRepository());
 
 //// Registrera WordService
 //builder.Services.AddSingleton<WordService>();
+
+
 
 
 var app = builder.Build();

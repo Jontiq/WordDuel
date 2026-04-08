@@ -1,0 +1,702 @@
+{
+  "info": {
+    "_postman_id": "f26a3fba-7455-4b05-ac29-17df7741603b",
+    "name": "New Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53362121"
+  },
+  "item": [
+    {
+      "name": "Host Game",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"roomCode returned\", function () {\r",
+              "    pm.expect(json.roomCode).to.exist;\r",
+              "});\r",
+              "\r",
+              "pm.test(\"matchId returned\", function () {\r",
+              "    pm.expect(json.matchId).to.exist;\r",
+              "});\r",
+              "\r",
+              "pm.environment.set(\"roomCode\", json.roomCode);\r",
+              "pm.environment.set(\"matchId\", json.matchId);\r",
+              "pm.environment.set(\"hostPlayerId\", 1);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"roundsToWin\": 3,\r\n  \"secondsPerRound\": 30,\r\n  \"playerName\": \"player1\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/host",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "host"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Game",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Correct room loaded\", function () {\r",
+              "    pm.expect(json.roomCode).to.eql(pm.environment.get(\"roomCode\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Match waits for players or is in progress\", function () {\r",
+              "    pm.expect([\"WaitingForPlayers\", \"InProgress\", \"Finished\"]).to.include(json.state);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Join Game",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Joined same room\", function () {\r",
+              "    pm.expect(json.roomCode).to.eql(pm.environment.get(\"roomCode\"));\r",
+              "});\r",
+              "\r",
+              "pm.environment.set(\"joinPlayerId\", 2);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerName\": \"player2\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/join/{{roomCode}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "join",
+            "{{roomCode}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Start Match",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "console.log(\"starterName:\", json.starterName);\r",
+              "\r",
+              "pm.test(\"Starter returned\", function () {\r",
+              "    pm.expect(json.starterName).to.exist;\r",
+              "    pm.expect(json.starterIndex).to.be.oneOf([0, 1]);\r",
+              "});\r",
+              "\r",
+              "pm.environment.set(\"starterName\", json.starterName);\r",
+              "\r",
+              "if (json.starterName === \"player1\") {\r",
+              "    pm.environment.set(\"currentPlayerId\", 1);\r",
+              "    pm.environment.set(\"otherPlayerId\", 2);\r",
+              "} else if (json.starterName === \"player2\") {\r",
+              "    pm.environment.set(\"currentPlayerId\", 2);\r",
+              "    pm.environment.set(\"otherPlayerId\", 1);\r",
+              "}\r",
+              "\r",
+              "console.log(\"currentPlayerId:\", pm.environment.get(\"currentPlayerId\"));"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/startmatch",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "startmatch"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Start words",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Three start words returned\", function () {\r",
+              "    pm.expect(json.words).to.be.an(\"array\");\r",
+              "    pm.expect(json.words.length).to.eql(3);\r",
+              "});\r",
+              "\r",
+              "pm.environment.set(\"startWord1\", json.words[0]);\r",
+              "pm.environment.set(\"startWord2\", json.words[1]);\r",
+              "pm.environment.set(\"startWord3\", json.words[2]);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/startwords",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "startwords"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Select word",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Word selection\", function () {\r",
+              "    pm.expect(json.word).to.exist;\r",
+              "    pm.expect(json.currentPlayer).to.exist;\r",
+              "});\r",
+              "\r",
+              "pm.environment.set(\"selectedWord\", json.word);\r",
+              "pm.environment.set(\"selectedWordLength\", json.word.length);\r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"word\": \"stark\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/selectword",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "selectword"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Submit word",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200 or 400\", function () {\r",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);\r",
+              "});\r",
+              "\r",
+              "if (pm.response.code === 200) {\r",
+              "    const json = pm.response.json();\r",
+              "\r",
+              "    pm.test(\"Next player returned\", function () {\r",
+              "        pm.expect(json.nextPlayer).to.exist;\r",
+              "    });\r",
+              "\r",
+              "    pm.test(\"Match finished flag returned\", function () {\r",
+              "        pm.expect(json.matchFinished).to.not.equal(undefined);\r",
+              "    });\r",
+              "\r",
+              "    const current = pm.environment.get(\"currentPlayerId\");\r",
+              "    const other = pm.environment.get(\"otherPlayerId\");\r",
+              "    pm.environment.set(\"currentPlayerId\", other);\r",
+              "    pm.environment.set(\"otherPlayerId\", current);\r",
+              "} else {\r",
+              "    pm.test(\"Bad request contains message\", function () {\r",
+              "        pm.expect(pm.response.text()).to.not.eql(\"\");\r",
+              "    });\r",
+              "}\r",
+              "console.log(\"Submit uses currentPlayerId:\", pm.environment.get(\"currentPlayerId\"));\r",
+              "console.log(\"Response:\", pm.response.text());"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerId\": {{currentPlayerId}},\r\n  \"word\": \"start\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/submitword",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "submitword"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Give up",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Round or match result returned\", function () {\r",
+              "    pm.expect(json.matchFinished).to.not.equal(undefined);\r",
+              "    pm.expect(json.scores).to.be.an(\"array\");\r",
+              "});\r",
+              "\r",
+              "const playerWhoGaveUp = parseInt(pm.environment.get(\"currentPlayerId\"), 10);\r",
+              "\r",
+              "if (playerWhoGaveUp === 1) {\r",
+              "    pm.environment.set(\"expectedRoundWinner\", \"player2\");\r",
+              "} else if (playerWhoGaveUp === 2) {\r",
+              "    pm.environment.set(\"expectedRoundWinner\", \"player1\");\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerId\": {{currentPlayerId}}\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/giveup",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "giveup"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Match",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "if (json.currentPlayer === \"player1\") {\r",
+              "    pm.environment.set(\"currentPlayerId\", 1);\r",
+              "    pm.environment.set(\"otherPlayerId\", 2);\r",
+              "} else if (json.currentPlayer === \"player2\") {\r",
+              "    pm.environment.set(\"currentPlayerId\", 2);\r",
+              "    pm.environment.set(\"otherPlayerId\", 1);\r",
+              "}\r",
+              "\r",
+              "pm.test(\"Players returned\", function () {\r",
+              "    pm.expect(json.players).to.be.an(\"array\");\r",
+              "    pm.expect(json.players.length).to.eql(2);\r",
+              "});\r",
+              "\r",
+              "const totalScore = json.players.reduce((sum, p) => sum + p.score, 0);\r",
+              "\r",
+              "pm.test(\"Exactly one point was awarded\", function () {\r",
+              "    pm.expect(totalScore).to.eql(1);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Winner got one point\", function () {\r",
+              "    const expectedWinner = pm.environment.get(\"expectedRoundWinner\");\r",
+              "    const winner = json.players.find(p => p.name === expectedWinner);\r",
+              "\r",
+              "    pm.expect(winner).to.exist;\r",
+              "    pm.expect(winner.score).to.eql(1);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Next player select word",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Round 2 started\", function () {\r",
+              "    pm.expect(json.word).to.eql(\"stack\");\r",
+              "    pm.expect(json.currentPlayer).to.exist;\r",
+              "});\r",
+              "\r",
+              "if (json.currentPlayer === \"player1\") {\r",
+              "    pm.environment.set(\"currentPlayerId\", 1);\r",
+              "    pm.environment.set(\"otherPlayerId\", 2);\r",
+              "} else if (json.currentPlayer === \"player2\") {\r",
+              "    pm.environment.set(\"currentPlayerId\", 2);\r",
+              "    pm.environment.set(\"otherPlayerId\", 1);\r",
+              "}\r",
+              "\r",
+              "pm.environment.set(\"currentStartWord\", json.word);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"word\": \"stack\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/selectword",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "selectword"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Timer expired",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "\r",
+              "pm.test(\"Status is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const json = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Timeout result returned\", function () {\r",
+              "    pm.expect(json.matchFinished).to.not.equal(undefined);\r",
+              "    pm.expect(json.scores).to.be.an(\"array\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerId\": {{currentPlayerId}}\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/timerexpired",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "timerexpired"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "roomCode",
+      "value": ""
+    },
+    {
+      "key": "matchId",
+      "value": ""
+    },
+    {
+      "key": "hostPlayerId",
+      "value": ""
+    },
+    {
+      "key": "joinPlayerId",
+      "value": ""
+    },
+    {
+      "key": "starterName",
+      "value": ""
+    },
+    {
+      "key": "currentPlayerId",
+      "value": ""
+    },
+    {
+      "key": "otherPlayerId",
+      "value": ""
+    },
+    {
+      "key": "startWord1",
+      "value": ""
+    },
+    {
+      "key": "startWord2",
+      "value": ""
+    },
+    {
+      "key": "startWord3",
+      "value": ""
+    },
+    {
+      "key": "selectedWord",
+      "value": ""
+    },
+    {
+      "key": "selectedWordLength",
+      "value": ""
+    }
+  ]
+}

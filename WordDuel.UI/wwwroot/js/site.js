@@ -24,6 +24,8 @@ function resetLocalGameState() {
 function updateRoomCodeUi(code) {
     document.getElementById('room-code').textContent = code ?? '';
     document.getElementById('di-session').textContent = code ?? '';
+    const devSession = document.getElementById('dev-di-session');
+    if (devSession) devSession.textContent = code ?? '';
 }
 
 // Starta anslutningen
@@ -185,6 +187,8 @@ connection.on("OnRoundResult", (data) => {
     showState('round-result');
     initRoundResult(youWon, displayReason);
     document.getElementById('di-roundstate').textContent = 'finished';
+    const devRound = document.getElementById('dev-di-roundstate');
+    if (devRound) devRound.textContent = 'finished';
 });
 
 // Matchen är slut
@@ -243,6 +247,8 @@ function showState(name, withTimer = true, withOverlay = false) {
     });
 
     document.getElementById('di-gamestate').textContent = name;
+    const devGameState = document.getElementById('dev-di-gamestate');
+    if (devGameState) devGameState.textContent = name;
 
     if (name === 'coin-flip') startCoinFlip();
     if (name === 'player-turn') initPlayerTurn(selectedWord || 'LUNKA');
@@ -439,6 +445,8 @@ function initPlayerTurn(word) {
     updateButtons();
     startTimer(currentTimerSeconds);
     document.getElementById('di-player').textContent = 'Du';
+    const devPlayer = document.getElementById('dev-di-player');
+    if (devPlayer) devPlayer.textContent = 'Du';
     updateScoreboard();
 }
 
@@ -620,6 +628,8 @@ function initSpectating(shouldStartTimer = true, showOverlay = false) {
     }
 
     document.getElementById('di-player').textContent = 'Motståndare';
+    const devPlayer = document.getElementById('dev-di-player');
+    if (devPlayer) devPlayer.textContent = 'Motståndare';
 }
 
 function renderSpectatingTiles() {
@@ -843,4 +853,8 @@ function updateScoreboard() {
     document.getElementById('pt-score-opponent').textContent = scores.opponent;
     document.getElementById('sp-score-you').textContent = scores.you;
     document.getElementById('sp-score-opponent').textContent = scores.opponent;
+}
+
+if (window.location.search.includes('dev')) {
+    document.getElementById('dev-nav').style.display = 'flex';
 }

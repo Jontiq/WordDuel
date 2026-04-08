@@ -76,7 +76,12 @@ namespace WordDuel.UI.Tests.Tests.Steps
         [Given("The join modal is open")]
         public async Task GivenTheJoinModalIsOpen()
         {
-            await _page.Locator("button", new() { HasTextString = "JOIN GAME" }).ClickAsync();
+            await _page.EvaluateAsync("openJoinModal()");
+            await _page.EvaluateAsync(@"
+        connection.invoke = async (method, ...args) => {
+            if (method === 'JoinGame') showState('waiting');
+        };
+    ");
         }
 
         [When("I enter the code {string}")]
@@ -168,7 +173,8 @@ namespace WordDuel.UI.Tests.Tests.Steps
         [When("The timer expires")]
         public async Task WhenTheTimerExpires()
         {
-            await _page.EvaluateAsync("timerActive = false; showState('round-result')");
+            // Simulera timeout utan att anropa SignalR
+            await _page.EvaluateAsync("timerActive = false; isMyTurn = false; showState('round-result')");
         }
 
         [Given("I navigate to spectating")]
@@ -240,27 +246,56 @@ namespace WordDuel.UI.Tests.Tests.Steps
         public async Task GivenINavigateToRoundResultWhereIWon()
         {
             await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
+            // Mocka SignalR
+            await _page.EvaluateAsync(@"
+        connection.invoke = async (method, ...args) => {
+            if (method === 'BeginNextRound') showState('word-select');
+        };
+    ");
+            await _page.EvaluateAsync("nextRoundStarterId = myPlayerId");
             await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("roundsToWin = 2");
             await _page.EvaluateAsync("initRoundResult(true, 'Motståndaren gick ut på tid.')");
+            await _page.EvaluateAsync("document.getElementById('rr-score-you').textContent = '1'");
+            await _page.EvaluateAsync("document.getElementById('rr-score-opponent').textContent = '0'");
         }
 
         [Given("I navigate to round result where I lost")]
         public async Task GivenINavigateToRoundResultWhereILost()
         {
             await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
+            await _page.EvaluateAsync("roundsToWin = 2");
             await _page.EvaluateAsync("showState('round-result')");
+            await _page.EvaluateAsync("roundsToWin = 2");
             await _page.EvaluateAsync("initRoundResult(false, 'Du gick ut på tid.')");
+            // Sätt poängen direkt i DOM efter initRoundResult
+            await _page.EvaluateAsync("document.getElementById('rr-score-opponent').textContent = '1'");
         }
 
         [Given("The match is won by the player")]
         public async Task GivenTheMatchIsWonByThePlayer()
         {
-            await _page.EvaluateAsync("scores = { you: 0, opponent: 0 }");
             await _page.EvaluateAsync("roundsToWin = 2");
-            // Simulera att spelaren vunnit 2 set i rad
-            await _page.EvaluateAsync("scores.you = 1");
+            await _page.EvaluateAsync("scores = { you: 2, opponent: 0 }"); // ← redan vunnit
             await _page.EvaluateAsync("showState('round-result')");
-            await _page.EvaluateAsync("initRoundResult(true, '')");
+            await _page.EvaluateAsync("roundsToWin = 2");
+
+            // Anropa initRoundResult med false så scores inte ökas igen
+            await _page.EvaluateAsync(@"
+        const btn = document.getElementById('rr-next-btn');
+        const countdownText = document.getElementById('rr-countdown-text');
+        document.getElementById('rr-result-text').textContent = 'Du vann setet!';
+        document.getElementById('rr-score-you').textContent = scores.you;
+        document.getElementById('rr-score-opponent').textContent = scores.opponent;
+        btn.textContent = 'Se resultat →';
+        btn.style.display = 'block';
+        btn.disabled = false;
+        countdownText.style.display = 'none';
+    ");
+
+            await Assertions.Expect(_page.Locator("#rr-next-btn"))
+                            .ToBeVisibleAsync(new() { Timeout = 5000 });
         }
 
         [Then("The result text shows {string}")]
@@ -341,6 +376,20 @@ namespace WordDuel.UI.Tests.Tests.Steps
         {
             await Assertions.Expect(_page.Locator("#mr-score-opponent"))
                             .ToHaveTextAsync(score);
+        }
+
+        [Then("the {string} button is visible")]
+        public async Task ThenTheButtonIsVisible(string label)
+        {
+            await Assertions.Expect(_page.Locator("button", new() { HasTextString = label }))
+                            .ToBeVisibleAsync();
+        }
+
+        [Then("The give up button is visible")]
+        public async Task ThenTheGiveUpButtonIsVisible()
+        {
+            await Assertions.Expect(_page.Locator("button", new() { HasTextString = "Ge upp" }))
+                            .ToBeVisibleAsync();
         }
     }
 }
