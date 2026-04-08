@@ -24,10 +24,10 @@ Scenario: Winner text is shown when player wins a round
     Then The player score shows "0"
     And The opponent score shows "1"
 
-  Scenario: Automatically navigates to coin flip when round ends and match is not over
+  Scenario: Automatically navigates to next round when round ends and match is not over
     Given I am on the mainpage
     And I navigate to round result where I won
-    Then The game-state eventually becomes "coin-flip"
+    Then The game-state eventually becomes "word-select"
 
   Scenario: Match result button shown when match is over
     Given I am on the mainpage

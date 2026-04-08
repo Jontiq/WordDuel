@@ -19,14 +19,13 @@ Scenario: Change roundtime
 	Then "15 sek" is selected
 	And "30 sek" is not selected
 
-Scenario: Click "Host game"
+Scenario: Click "Host game" button exists and is clickable
     Given I am on the mainpage
-    When I click on "HOST GAME"
-    Then The game-state is "waiting"
+    Then the "SKAPA NYTT SPEL" button is visible
 
 Scenario: Click "JOIN GAME" opens modal
     Given I am on the mainpage
-    When I click on "JOIN GAME"
+    When I click on "GÅ MED I SPEL"
     Then The join modal is visible
 
 Scenario: Close join modal with cancel
@@ -39,12 +38,12 @@ Scenario: Submit join code navigates to waiting
     Given I am on the mainpage
     And The join modal is open
     When I enter the code "WD-1234"
-    And I click on "Gå med"
+    And I click the modal button "Gå med"
     Then The game-state is "waiting"
 
 Scenario: Submit button disabled with incomplete code
     Given I am on the mainpage
     And The join modal is open
     When I enter the code "WD-12"
-    And I click on "Gå med"
+    And I click the modal button "Gå med"
     Then The join modal is still visible

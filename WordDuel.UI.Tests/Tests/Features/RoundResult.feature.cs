@@ -247,13 +247,13 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
         }
         
         [global::NUnit.Framework.TestAttribute()]
-        [global::NUnit.Framework.DescriptionAttribute("Automatically navigates to coin flip when round ends and match is not over")]
-        public async global::System.Threading.Tasks.Task AutomaticallyNavigatesToCoinFlipWhenRoundEndsAndMatchIsNotOver()
+        [global::NUnit.Framework.DescriptionAttribute("Automatically navigates to next round when round ends and match is not over")]
+        public async global::System.Threading.Tasks.Task AutomaticallyNavigatesToNextRoundWhenRoundEndsAndMatchIsNotOver()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "4";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Automatically navigates to coin flip when round ends and match is not over", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Automatically navigates to next round when round ends and match is not over", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 27
@@ -273,7 +273,7 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
     await testRunner.AndAsync("I navigate to round result where I won", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 30
-    await testRunner.ThenAsync("The game-state eventually becomes \"coin-flip\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("The game-state eventually becomes \"word-select\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
