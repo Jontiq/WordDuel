@@ -24,7 +24,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("UIPolicy", policy =>
     {
-        policy.WithOrigins("https://localhost:7057")
+        policy.SetIsOriginAllowed(_ => true) // Tillåt alla origins på LAN
+        //.WithOrigins("https://localhost:7057")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
