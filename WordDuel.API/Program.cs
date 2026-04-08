@@ -10,6 +10,8 @@ using WordDuel.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("https://0.0.0.0:7222", "http://0.0.0.0:5103");
+
 // Controllers + OpenAPI
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
