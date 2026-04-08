@@ -134,7 +134,7 @@ public class GameHub : Hub
     // ── BEGIN NEXT ROUND ──
     public async Task BeginNextRound(string roomCode)
     {
-        var match = _sessionStore.Get(roomCode);
+        var match = await _persistence.LoadMatchAsync(roomCode);
         if (match == null) return;
         if (_matchService.IsMatchFinished(match)) return;
         if (match.CurrentPlayer == null) return;
