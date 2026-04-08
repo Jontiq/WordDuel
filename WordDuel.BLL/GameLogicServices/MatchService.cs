@@ -33,7 +33,7 @@ public class MatchService : IMatchService
             State = MatchState.WaitingForPlayers
         };
 
-        match.Players.Add(CreatePlayer(firstPlayerName, 1));
+        match.Players.Add(CreatePlayer(1, firstPlayerName));
         return match;
     }
 
@@ -45,7 +45,7 @@ public class MatchService : IMatchService
         if (!CanJoinMatch(match))
             throw new InvalidOperationException("Match cannot accept more players.");
 
-        match.Players.Add(CreatePlayer(secondPlayerName, 2));
+        match.Players.Add(CreatePlayer(2, secondPlayerName));
         return match;
     }
 
@@ -165,16 +165,16 @@ public class MatchService : IMatchService
     }
 
     // Helper method for creating players consistently.
-    // Id = 0 signals to the persistence layer that this is a new entity
-    // and the database should generate the real ID.
-    private static PlayerDto CreatePlayer(string? name, int playerNumber)
+    // We assign ids manually here because this logic is currently in-memory
+    // and not yet handled by the database.
+    private static PlayerDto CreatePlayer(int id, string? name)
     {
         name = name?.Trim();
 
         return new PlayerDto
         {
-            Id = 0,
-            Name = string.IsNullOrWhiteSpace(name) ? $"Player {playerNumber}" : name,
+            Id = id,
+            Name = string.IsNullOrWhiteSpace(name) ? $"Player {id}" : name,
             Score = 0
         };
     }
