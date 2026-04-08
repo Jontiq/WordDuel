@@ -1,0 +1,100 @@
+{
+  "id": "da7261d7-cd5a-496d-841d-dbfaf0ab861f",
+  "name": "LocalHost",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "expectedRoundWinner",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "currentPlayerId",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "otherPlayerId",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "currentStartWord",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "roomCode",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "matchId",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "hostPlayerId",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "joinPlayerId",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "starterName",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "startWord1",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "startWord2",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "startWord3",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "selectedWord",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    },
+    {
+      "key": "selectedWordLength",
+      "value": "",
+      "type": "any",
+      "enabled": true
+    }
+  ],
+  "color": null,
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-04-08T10:06:45.866Z",
+  "_postman_exported_using": "Postman/12.4.4-260402-0231"
+}
