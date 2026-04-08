@@ -1,6 +1,7 @@
 ﻿// ── SIGNALR SETUP ──
+const apiHost = location.hostname; // Använder samma host som webbläsaren
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("https://localhost:7222/gameHub")  // ← byt till API-projektets port
+    .withUrl(`https://${apiHost}:7222/gameHub`)
     .withAutomaticReconnect()
     .build();
 
