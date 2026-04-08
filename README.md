@@ -1,9 +1,27 @@
-Så här hostar du WordDuel lokalt:
+# WordDuel – Local Hosting Guide
 
-Öppna PowerShell och kör ipconfig
-Kopiera din IPv4-adress (ser ut som 192.168.x.x)
-Starta programmet via Start without debugging
-Dela länken https://DIN_IP:7057 med de som vill ansluta
-De som ansluter kan behöva acceptera en SSL-varning i webbläsaren – tryck på Avancerat och fortsätt
+## Prerequisites
+- All players must be connected to the same Wi-Fi network
+- The host must run the application on their device
 
-Observera att sidan endast fungerar när du kör programmet på din dator och att alla måste vara anslutna till samma WiFi-nätverk.
+## How to Host
+
+1. Open PowerShell and run:
+ipconfig
+
+2. Copy your **IPv4 Address** (e.g. `192.168.1.45`)
+
+3. Start the application via **Start without debugging** in Visual Studio
+
+4. Share the following link with other players:
+https://YOUR_IP:7057
+
+## How to Join
+
+1. Open the link shared by the host in your browser
+2. If you see a security warning, click **Advanced** and proceed anyway
+   - This is expected since the application uses a local development certificate
+
+## Notes
+- The game is only accessible while the host is running the application
+- If players cannot connect, make sure everyone is on the same Wi-Fi network
