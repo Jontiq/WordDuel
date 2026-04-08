@@ -122,6 +122,50 @@
       "response": []
     },
     {
+      "name": "Join Invalid room",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 404\", function () {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"playerName\": \"player2\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/join/WD-9999",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "join",
+            "WD-9999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Join Game",
       "event": [
         {
@@ -152,6 +196,50 @@
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"playerName\": \"player2\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/join/{{roomCode}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "join",
+            "{{roomCode}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Join full room",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerName\": \"player3\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -217,6 +305,50 @@
         "body": {
           "mode": "raw",
           "raw": ""
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/startmatch",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "startmatch"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Start match again",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerId\": {{currentPlayerId}}\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{base_url}}/api/Game/{{roomCode}}/startmatch",
@@ -342,6 +474,54 @@
       "response": []
     },
     {
+      "name": "Submit wrong player",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Wrong turn message returned\", function () {\r",
+              "    pm.expect(pm.response.text()).to.include(\"It is not this player's turn\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerId\": {{otherPlayerId}},\r\n  \"word\": \"start\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/submitword",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "submitword"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Submit word",
       "event": [
         {
@@ -392,6 +572,98 @@
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"playerId\": {{currentPlayerId}},\r\n  \"word\": \"start\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/submitword",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "submitword"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Submit invalid word",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Correct validation error returned\", function () {\r",
+              "    pm.expect(pm.response.text()).to.not.eql(\"\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerId\": {{currentPlayerId}},\r\n  \"word\": \"byter\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}/submitword",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}",
+            "submitword"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Submit reused word",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"playerId\": {{currentPlayerId}},\r\n  \"word\": \"stark\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
