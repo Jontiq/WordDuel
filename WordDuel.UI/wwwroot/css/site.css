@@ -863,6 +863,35 @@ hr.divider {
 }
 
 /* ── RESPONSIVE ── */
+
+@media (max-width: 800px) {
+    .tile {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+        .tile input {
+            font-size: 20px;
+        }
+
+    .word-tiles {
+        gap: 6px;
+    }
+
+    .game-layout {
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .game-active-zone {
+        min-width: 0;
+    }
+    .game-history-zone {
+        max-height: 280px;
+    }
+
+
 @media (max-width: 600px) {
     .row {
         flex-direction: column;
