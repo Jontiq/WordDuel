@@ -10,8 +10,13 @@
     <link rel="stylesheet" href="~/WordDuel.UI.styles.css" asp-append-version="true" />
 </head>
 <body>
+    <!-- Dolda element för tester -->
+    <span id="di-gamestate" style="display:none;">lobby</span>
+    <span id="di-session" style="display:none;">null</span>
+    <span id="di-roundstate" style="display:none;">null</span>
+    <span id="di-player" style="display:none;">null</span>
     <header>
-        <nav class="dev-nav">
+        <nav class="dev-nav" id="dev-nav" style="display:none;">
             <span>DEV</span>
             <button class="dev-btn active" onclick="showState('lobby')">Lobby</button>
             <button class="dev-btn" onclick="showState('waiting')">Waiting</button>
@@ -22,16 +27,15 @@
             <button class="dev-btn" onclick="showState('spectating')">Spectating</button>
             <button class="dev-btn" onclick="showState('round-result')">RoundResult</button>
             <button class="dev-btn" onclick="showState('match-result')">MatchResult</button>
-
             <div style="flex: 1;"></div>
             <button class="info-btn" onclick="togglePanel()">&#9432; game info</button>
         </nav>
 
         <div class="info-panel" id="dev-panel">
-            <div class="info-row"><span class="info-key">game-state</span><span class="info-val" id="di-gamestate">Lobby</span></div>
-            <div class="info-row"><span class="info-key">game-session</span><span class="info-val" id="di-session">null</span></div>
-            <div class="info-row"><span class="info-key">round-state</span><span class="info-val" id="di-roundstate">null</span></div>
-            <div class="info-row"><span class="info-key">current-player</span><span class="info-val" id="di-player">null</span></div>
+            <div class="info-row"><span class="info-key">game-state</span><span class="info-val" id="dev-di-gamestate">lobby</span></div>
+            <div class="info-row"><span class="info-key">game-session</span><span class="info-val" id="dev-di-session">null</span></div>
+            <div class="info-row"><span class="info-key">round-state</span><span class="info-val" id="dev-di-roundstate">null</span></div>
+            <div class="info-row"><span class="info-key">current-player</span><span class="info-val" id="dev-di-player">null</span></div>
         </div>
     </header>
 
