@@ -45,7 +45,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"roundsToWin\": 3,\r\n  \"secondsPerRound\": 30,\r\n  \"playerName\": \"player1\"\r\n}",
+          "raw": "{\r\n  \"roundsToWin\": 2,\r\n  \"secondsPerRound\": 30,\r\n  \"playerName\": \"player1\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -83,8 +83,8 @@
               "    pm.expect(json.roomCode).to.eql(pm.environment.get(\"roomCode\"));\r",
               "});\r",
               "\r",
-              "pm.test(\"Match waits for players or is in progress\", function () {\r",
-              "    pm.expect([\"WaitingForPlayers\", \"InProgress\", \"Finished\"]).to.include(json.state);\r",
+              "pm.test(\"Match is waiting for players\", function () {\r",
+              "    pm.expect(json.state).to.eql(\"WaitingForPlayers\");\r",
               "});\r",
               ""
             ],
@@ -316,6 +316,41 @@
             "Game",
             "{{roomCode}}",
             "startmatch"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get game after start",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Match is in progress\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.state).to.eql(\"InProgress\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}"
           ]
         }
       },
@@ -915,6 +950,47 @@
             "Game",
             "{{roomCode}}",
             "timerexpired"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get match after timer expired",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Match is finished\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    pm.expect(json.state).to.eql(\"Finished\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"One player has 2 points\", function () {\r",
+              "    const json = pm.response.json();\r",
+              "    const winner = json.players.find(p => p.score === 2);\r",
+              "    pm.expect(winner).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/Game/{{roomCode}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "Game",
+            "{{roomCode}}"
           ]
         }
       },
