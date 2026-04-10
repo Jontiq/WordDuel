@@ -9,12 +9,13 @@ namespace WordDuel.UnitTests;
 public class MatchServiceTests
 {
     private readonly MatchService service;
-    private readonly Mock<IWordService> wordServiceMock;
+    private readonly Mock<IWordService> wordServiceMock; // Mocking IWordService to control its behavior during tests
 
     public MatchServiceTests()
     {
-        wordServiceMock = new Mock<IWordService>();
+        wordServiceMock = new Mock<IWordService>(); // Create a mock instance of IWordService
 
+        // Set up default behavior for the mock to return true for valid words and one letter changed checks
         wordServiceMock
             .Setup(x => x.IsValidWordAsync(It.IsAny<string>()))
             .ReturnsAsync(true);
@@ -23,7 +24,7 @@ public class MatchServiceTests
             .Setup(x => x.OneLetterChangedAsync(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
 
-        service = new MatchService(wordServiceMock.Object, new Random());
+        service = new MatchService(wordServiceMock.Object, new Random()); // Inject the mock IWordService into the MatchService
     }
 
     private MatchDto CreateMatchWithTwoPlayers()
@@ -111,11 +112,45 @@ public class MatchServiceTests
     }
 
     [Fact]
+    public void CanJoinMatch_ShouldReturnFalse_WhenMatchAlreadyHasTwoPlayers()
+    {
+        var match = CreateMatchWithTwoPlayers();
+
+        Assert.False(service.CanJoinMatch(match));
+    }
+
+    [Fact]
+public void CanJoinMatch_ShouldReturnFalse_WhenMatchIsNotWaitingForPlayers()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+
+        Assert.False(service.CanJoinMatch(match));
+    }
+
+    [Fact]
     public void IsMatchReadyToStart_ShouldReturnTrue_WhenTwoPlayersHaveJoined()
     {
         var match = CreateMatchWithTwoPlayers();
 
         Assert.True(service.IsMatchReadyToStart(match));
+    }
+
+    [Fact]
+    public void IsMatchReadyToStart_ShouldReturnFalse_WhenOnlyOnePlayerHasJoined()
+    {
+        var match = service.CreateMatch(3, 30, "Anna");
+
+        Assert.False(service.IsMatchReadyToStart(match));
+    }
+
+    [Fact]
+    public void IsMatchReadyToStart_ShouldReturnFalse_WhenMatchAlreadyStarted()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+
+        Assert.False(service.IsMatchReadyToStart(match));
     }
 
     [Fact]
@@ -190,6 +225,26 @@ public class MatchServiceTests
     }
 
     [Fact]
+    public async Task StartNewRoundAsync_ShouldThrow_WhenMatchIsNotInProgress()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        match.CurrentPlayer = match.Players[0];
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.StartNewRoundAsync(match, "stark"));
+    }
+
+    [Fact]
+    public async Task StartNewRoundAsync_ShouldThrow_WhenStartingWordIsEmpty()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.StartNewRoundAsync(match, ""));
+    }
+
+    [Fact]
     public void SwitchTurn_ShouldChangeCurrentPlayerToTheOtherPlayer()
     {
         var match = CreateMatchWithTwoPlayers();
@@ -198,6 +253,24 @@ public class MatchServiceTests
         service.SwitchTurn(match);
 
         Assert.Equal(match.Players[1].Id, match.CurrentPlayer?.Id);
+    }
+
+    [Fact]
+    public void SwitchTurn_ShouldThrow_WhenCurrentPlayerIsNull()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        match.CurrentPlayer = null;
+
+        Assert.Throws<InvalidOperationException>(() => service.SwitchTurn(match));
+    }
+
+    [Fact]
+    public void SwitchTurn_ShouldThrow_WhenMatchDoesNotHaveTwoPlayers()
+    {
+        var match = service.CreateMatch(3, 30, "Anna");
+        match.CurrentPlayer = match.Players[0];
+
+        Assert.Throws<InvalidOperationException>(() => service.SwitchTurn(match));
     }
 
     [Fact]
@@ -240,6 +313,58 @@ public class MatchServiceTests
 
         Assert.Equal(match.Players[1].Id, match.CurrentPlayer?.Id);
     }
+
+    [Fact]
+    public void EndRound_ShouldThrow_WhenThereIsNoActiveRound()
+    {
+        var match = CreateMatchWithTwoPlayers();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            service.EndRound(match, match.Players[0].Id));
+    }
+
+    [Fact]
+    public async Task EndRound_ShouldThrow_WhenRoundIsAlreadyFinished()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        await service.StartNewRoundAsync(match, "stark");
+
+        match.Rounds[0].State = RoundState.Finished;
+
+        Assert.Throws<InvalidOperationException>(() =>
+            service.EndRound(match, match.Players[0].Id));
+    }
+
+    [Fact]
+    public async Task EndRound_ShouldThrow_WhenWinnerIsNotInMatch()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+        await service.StartNewRoundAsync(match, "stark");
+
+        Assert.Throws<InvalidOperationException>(() =>
+            service.EndRound(match, 999));
+    }
+
+
+    [Fact]
+    public void IsMatchFinished_ShouldReturnFalse_WhenNoPlayerReachedRoundsToWin()
+    {
+        var match = CreateMatchWithTwoPlayers();
+
+        Assert.False(service.IsMatchFinished(match));
+    }
+
+    [Fact]
+    public void IsMatchFinished_ShouldReturnTrue_WhenAPlayerReachedRoundsToWin()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        match.Players[0].Score = match.RoundsToWin;
+
+        Assert.True(service.IsMatchFinished(match));
+    }
+
 
     [Fact]
     public async Task GiveUpRound_ShouldMakeOtherPlayerWinRound()
@@ -420,5 +545,63 @@ public class MatchServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.SubmitMoveAsync(match, match.Players[0].Id, "start"));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenNoActiveRoundExists()
+    {
+        var match = CreateMatchWithTwoPlayers();
+        service.StartMatch(match);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.SubmitMoveAsync(match, match.CurrentPlayer!.Id, "start"));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenRoundIsFinished()
+    {
+        var match = CreateMatchWithActiveRound("stark");
+        match.Rounds[0].State = RoundState.Finished;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.SubmitMoveAsync(match, match.Players[0].Id, "start"));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenWordIsEmpty()
+    {
+        var match = CreateMatchWithActiveRound("stark");
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            service.SubmitMoveAsync(match, match.Players[0].Id, ""));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldThrow_WhenWordLengthDiffers()
+    {
+        var match = CreateMatchWithActiveRound("stark");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.SubmitMoveAsync(match, match.Players[0].Id, "star"));
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldAddWordToUsedWords_WhenMoveIsValid()
+    {
+        var match = CreateMatchWithActiveRound("stark");
+
+        await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
+
+        Assert.Contains("start", match.Rounds[0].UsedWords);
+    }
+
+    [Fact]
+    public async Task SubmitMoveAsync_ShouldSetMoveNumberToOne_ForFirstMove()
+    {
+        var match = CreateMatchWithActiveRound("stark");
+
+        await service.SubmitMoveAsync(match, match.Players[0].Id, "start");
+
+        Assert.Equal(1, match.Rounds[0].Moves[0].MoveNumber);
     }
 }
